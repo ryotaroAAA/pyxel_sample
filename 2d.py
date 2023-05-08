@@ -1,85 +1,95 @@
+from enum import auto, Enum
 import pyxel
 import pprint
-from enum import auto, Enum
+import random
+
+obj_info = {
+    # obj
+    "wall" : {"tile_x": 0, "tile_y": 6, "colkey": None, "col": 1},
+    "water" : {"tile_x": 2, "tile_y": 6, "colkey": None, "col": 1},
+    "aisle" : {"tile_x": 0, "tile_y": 5, "colkey": None, "col": 0},
+    "grass" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 0},
+    "wood" : {"tile_x": 3, "tile_y": 5, "colkey": None, "col": 1},
+    # charactor
+    "hero" : {"tile_x": 1, "tile_y": 0, "colkey": 0, "col": 1},
+    "reimu" : {"tile_x": 2, "tile_y": 0, "colkey": 1, "col": 1},
+    "marisa" : {"tile_x": 3, "tile_y": 0, "colkey": 1, "col": 1},
+    # enemy
+    "enemy1" : {"tile_x": 0, "tile_y": 4, "colkey": 0, "col": 1},
+    "enemy2" : {"tile_x": 1, "tile_y": 4, "colkey": 0, "col": 1},
+    "enemy3" : {"tile_x": 2, "tile_y": 4, "colkey": 0, "col": 1},
+    "enemy4" : {"tile_x": 3, "tile_y": 4, "colkey": 0, "col": 1},
+    "boss" : {"tile_x": 4, "tile_y": 4, "colkey": 0, "col": 1},
+    # item
+    # wepon
+    "wepon1" : {"tile_x": 0, "tile_y": 1, "colkey": 0, "col": 1},
+    "wepon2" : {"tile_x": 1, "tile_y": 1, "colkey": 0, "col": 1},
+    "wepon3" : {"tile_x": 2, "tile_y": 1, "colkey": 0, "col": 1},
+    "wepon4" : {"tile_x": 3, "tile_y": 1, "colkey": 0, "col": 1},
+    "wepon5" : {"tile_x": 4, "tile_y": 1, "colkey": 0, "col": 1},
+    "armor1" : {"tile_x": 0, "tile_y": 2, "colkey": 0, "col": 1},
+    "armor2" : {"tile_x": 1, "tile_y": 2, "colkey": 0, "col": 1},
+    "armor3" : {"tile_x": 2, "tile_y": 2, "colkey": 0, "col": 1},
+    "item1" : {"tile_x": 0, "tile_y": 3, "colkey": 0, "col": 1},
+    "item2" : {"tile_x": 1, "tile_y": 3, "colkey": 0, "col": 1},
+    "item3" : {"tile_x": 2, "tile_y": 3, "colkey": 0, "col": 1},
+    "item4" : {"tile_x": 3, "tile_y": 3, "colkey": 0, "col": 1},
+    "treasure" : {"tile_x": 4, "tile_y": 3, "colkey": 0, "col": 1},
+}
 
 class Obj:
-    def __init__(self, name, tile_x, tile_y, colkey=None, col=False):
+    def __init__(self, name, tile_x=None, tile_y=None, x=None, y=None, colkey=None, col=False):
         self.name = name
-        self.tile_x = tile_x
-        self.tile_y = tile_y
-        self.colkey = colkey
-        self.col = col
+        self.x = x if None else x
+        self.y = y if None else y
+        self.tile_x = obj_info["tile_x"] if None else tile_x
+        self.tile_y = obj_info["tile_y"] if None else tile_y
+        self.colkey = obj_info["colkey"] if None else colkey
+        self.col = obj_info["col"] if None else col
 
 class Character(Obj):
-    def __init__(self, obj, name, health, attack, defense, agility):
+    def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
         super().__init__(name)
-        self.health = health
-        self.attack = attack
-        self.defense = defense
-        self.agility = agility
+        self.level = obj_info["level"] if None else level
+        self.health = obj_info["health"] if None else health
+        self.attack = obj_info["attack"] if None else attack
+        self.defense = obj_info["defense"] if None else defense
+        self.agility = obj_info["agility"] if None else agility
+        self.gold = obj_info["gold"] if None else gold
+        self.exp = obj_info["exp"] if None else exp
 
 class Enemy(Character):
-    def __init__(self, name, health, attack, defense, gold, experience):
-        super().__init__(name, health, attack, defense)
-        self.gold = gold
-        self.experience = experience
+    def __init__(self, name, health=None, attack=None, defense=None, agility=None, exp=None, gold=None):
+        super().__init__(name, health, attack, defense, agility, exp, gold)
 
 class Player(Character):
-    def __init__(self, name, health, attack, defense, level, experience, gold):
-        super().__init__(name, health, attack, defense)
-        self.level = level
-        self.experience = experience
-        self.gold = gold
+    def __init__(self, name, health=None, attack=None, defense=None, level=None, exp=None, gold=None):
+        super().__init__(name, health, attack, defense, level, exp, gold)
 
 class Item(Obj):
-    def __init__(self, name, description):
+    def __init__(self, name, desc=None):
         self.name = name
-        self.description = description
+        self.desc = dbj_info["desc"] if None else desc
 
 class Weapon(Item):
-    def __init__(self, name, description, attack_bonus):
-        super().__init__(name, description)
-        self.attack_bonus = attack_bonus
+    def __init__(self, name, attack=None):
+        super().__init__(name)
+        self.attack = dbj_info["attack"] if None else attack
 
 class Armor(Item):
-    def __init__(self, name, description, defense_bonus):
-        super().__init__(name, description)
-        self.defense_bonus = defense_bonus
+    def __init__(self, name, defense=None):
+        super().__init__(name)
+        self.defense = dbj_info["defense"] if None else defense
+
+def get_random_position(game_map, map_size_x, map_size_y):
+    while True:
+        x = random.randint(0, map_size_x - 1)
+        y = random.randint(0, map_size_y - 1)
+        if game_map[y][x]["col"] == 0:
+            print(x, y)
+            return x, y
 
 class Game:
-    tile_dic = {
-        # background
-        "wall" : (0, 6, None, 1),
-        "water" : (2, 6, None, 1),
-        "aisle" : (0, 5, None, 0),
-        "grass" : (2, 5, None, 0),
-        "wood" : (3, 5, None, 1),
-        # sprite
-        # charactor
-        "hero" : (1, 0, 0, 1),
-        "reimu" : (2, 0, 1, 1),
-        "marisa" : (3, 0, 1, 1),
-        # item
-        "wepon1" : (0, 1, 0, 1),
-        "wepon2" : (1, 1, 0, 1),
-        "wepon3" : (2, 1, 0, 1),
-        "wepon4" : (3, 1, 0, 1),
-        "wepon5" : (4, 1, 0, 1),
-        "armor1" : (0, 2, 0, 1),
-        "armor2" : (1, 2, 0, 1),
-        "armor3" : (2, 2, 0, 1),
-        "item1" : (0, 3, 0, 1),
-        "item2" : (1, 3, 0, 1),
-        "item3" : (2, 3, 0, 1),
-        "item4" : (3, 3, 0, 1),
-        "treasure" : (4, 3, 0, 1),
-        # enemy
-        "enemy1" : (0, 4, 0, 1),
-        "enemy2" : (1, 4, 0, 1),
-        "enemy3" : (2, 4, 0, 1),
-        "enemy4" : (3, 4, 0, 1),
-        "boss" : (4, 4, 0, 1)
-    }
     def __init__(self):
         self.tile_x = 8
         self.tile_y = 8
@@ -94,12 +104,14 @@ class Game:
         pyxel.load("assets.pyxres")
 
         # start position
-        self.x = 2
-        self.y = 2
+        self.x = 0
+        self.y = 0
 
         self.map_size_x = 24
         self.map_size_y = 24
         self.map_init()
+        self.set_random_position()
+
         pyxel.run(self.update, self.draw)
 
     # 初期化
@@ -110,21 +122,26 @@ class Game:
         for i in range(self.map_size_x):
             for j in range(self.map_size_y):
                 x, y = pyxel.tilemap(0).pget(i, j)
-                for _, tile in self.tile_dic.items():
-                    if tile[0] == x and tile[1] == y:
+                for _, tile in obj_info.items():
+                    if tile["tile_x"] == x and tile["tile_y"] == y:
                         self.map[j][i] = tile
 
+    def set_random_position(self):
+        self.x, self.y = get_random_position(self.map,
+                                            self.map_size_x,
+                                            self.map_size_y)
+
     def is_collision(self, x, y):
-        return self.map[y][x][3]
+        return self.map[y][x]["col"]
 
     def draw_tile(self, x, y, tile):
         """
         x, y: 描画位置
         tile: image bank上の位置、透明色
         """
-        tile_x = tile[0]
-        tile_y = tile[1]
-        colkey = tile[2]
+        tile_x = tile["tile_x"]
+        tile_y = tile["tile_y"]
+        colkey = tile["colkey"]
         # print(x, y, tile, tile_x, tile_y, pyxel.tilemap(0).pget(tile_x, tile_y))
         pyxel.blt(x*self.bit_x,
             y*self.bit_y,
@@ -177,6 +194,6 @@ class Game:
                 self.draw_tile(i, j, self.map[j][i])
         
         # draw sprites
-        self.draw_tile(self.x, self.y, self.tile_dic["reimu"])
+        self.draw_tile(self.x, self.y, obj_info["reimu"])
 
 Game()
