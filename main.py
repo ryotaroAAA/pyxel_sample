@@ -2,6 +2,50 @@ import pyxel
 import pprint
 from enum import auto, Enum
 
+class Obj:
+    def __init__(self, name, tile_x, tile_y, colkey=None, col=False):
+        self.name = name
+        self.tile_x = tile_x
+        self.tile_y = tile_y
+        self.colkey = colkey
+        self.col = col
+
+class Character(Obj):
+    def __init__(self, obj, name, health, attack, defense, agility):
+        super().__init__(name)
+        self.health = health
+        self.attack = attack
+        self.defense = defense
+        self.agility = agility
+
+class Enemy(Character):
+    def __init__(self, name, health, attack, defense, gold, experience):
+        super().__init__(name, health, attack, defense)
+        self.gold = gold
+        self.experience = experience
+
+class Player(Character):
+    def __init__(self, name, health, attack, defense, level, experience, gold):
+        super().__init__(name, health, attack, defense)
+        self.level = level
+        self.experience = experience
+        self.gold = gold
+
+class Item(Obj):
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+class Weapon(Item):
+    def __init__(self, name, description, attack_bonus):
+        super().__init__(name, description)
+        self.attack_bonus = attack_bonus
+
+class Armor(Item):
+    def __init__(self, name, description, defense_bonus):
+        super().__init__(name, description)
+        self.defense_bonus = defense_bonus
+
 class Game:
     tile_dic = {
         # background
@@ -71,15 +115,6 @@ class Game:
                         self.map[j][i] = tile
 
     def is_collision(self, x, y):
-        # tile_x, tile_y = pyxel.tilemap(0).pget(
-        #     x + self.tile_x * (self.x//self.tile_x),
-        #     y + self.tile_y * (self.y//self.tile_y))
-        # collision = 0
-        # for _, tile in self.tile_dic.items():
-        #     if tile[0] == tile_x and tile[1] == tile_y:
-        #         collision = tile[3]
-        #         break
-        # # print(x, y, tile_x, tile_y, tile, collision)
         return self.map[y][x][3]
 
     def draw_tile(self, x, y, tile):
