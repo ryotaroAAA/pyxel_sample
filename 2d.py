@@ -3,6 +3,7 @@ from enum import auto, Enum
 import pyxel
 import pprint
 import random
+import sys
 
 # default global
 TILE_HEIGHT = 8
@@ -57,8 +58,13 @@ class Obj:
         self.colkey = obj_info["colkey"] if None else colkey
         self.col = obj_info["col"] if None else col
     
-    def spawn(self, args, x=None, y=None, rand=False):
-        pass
+    def spawn(self, params, x=None, y=None):
+        # game_map = args.
+        if type(x) == type(y) == int:
+            if x > 0 and y > 0 and is_collision(params["map"], x, y):
+                self.x = x
+                self.y = y
+                self.draw_tile(self.x, self.y, obj_info["reimu"])
 
 class Character(Obj):
     def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
@@ -102,13 +108,16 @@ def get_random_position(game_map, map_size_x, map_size_y):
             print(x, y)
             return x, y
 
+def is_collision(game_map, x, y):
+    return game_map[y][x]["col"]
+
 class Game:
-    def __init__(self, args):
-        self.args = args
-        self.tile_x = args.tile_width
-        self.tile_y = args.tile_height
-        self.bit_x = args.bit_width
-        self.bit_y = args.bit_height
+    def __init__(self, params):
+        self.params = params
+        self.tile_x = params.tile_width
+        self.tile_y = params.tile_height
+        self.bit_x = params.bit_width
+        self.bit_y = params.bit_height
         self.width = self.tile_x*self.bit_x
         self.height = self.tile_y*self.bit_y
         pyxel.init(self.width, self.height, fps = args.fps)
@@ -121,8 +130,8 @@ class Game:
         self.x = 0
         self.y = 0
 
-        self.map_size_x = args.map_width
-        self.map_size_y = args.map_height
+        self.map_size_x = params.map_width
+        self.map_size_y = params.map_height
         self.map_init()
         self.set_random_position()
 
@@ -139,6 +148,7 @@ class Game:
                 for _, tile in obj_info.items():
                     if tile["tile_x"] == x and tile["tile_y"] == y:
                         self.map[j][i] = tile
+        self.params["map"] = self.map
 
     def set_random_position(self):
         self.x, self.y = get_random_position(self.map,
@@ -166,9 +176,7 @@ class Game:
             self.bit_y,
             colkey)
 
-    # 毎フレームオンメモリ情報を書き換える
-    def update(self):
-        # self.x = (self.x + 1) % pyxel.width
+    def update_direction(self):
         if pyxel.frame_count % 5 == 0:
             x = self.x
             y = self.y
@@ -188,7 +196,13 @@ class Game:
             if mod and not self.is_collision(x, y):
                 self.x = x
                 self.y = y
-    
+
+    # 毎フレームオンメモリ情報を書き換える
+    def update(self):
+        self.update_direction()
+        if pyxel.btn(pyxel.KEY_S):
+            Enemy("hoge").spawn(self.params)
+
     # 毎フレーム実際描画する
     def draw(self):
         # 画面黒初期化
@@ -221,6 +235,8 @@ if __name__ == '__main__':
     parser.add_argument("-fps", "--fps", type=int, default=30, help="")
     parser.add_argument("-s", "--stop", action="store_true", help="")
     args = parser.parse_args()
-    pprint.pprint(vars(args))
+    params = vars(args)
 
-    Game(args)
+    pprint.pprint(params)
+
+    Game(params)
