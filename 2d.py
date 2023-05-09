@@ -1,7 +1,17 @@
+import argparse
 from enum import auto, Enum
 import pyxel
 import pprint
 import random
+
+# default global
+TILE_HEIGHT = 8
+TILE_WIDTH = 8
+BIT_HEIGHT = 8
+BIT_WIDTH = 8
+HEIGHT = TILE_HEIGHT*BIT_HEIGHT
+WIDTH = BIT_WIDTH*BIT_WIDTH
+FPS = 30
 
 obj_info = {
     # obj
@@ -46,6 +56,9 @@ class Obj:
         self.tile_y = obj_info["tile_y"] if None else tile_y
         self.colkey = obj_info["colkey"] if None else colkey
         self.col = obj_info["col"] if None else col
+    
+    def spawn(self, args, x=None, y=None, rand=False):
+        pass
 
 class Character(Obj):
     def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
@@ -90,25 +103,26 @@ def get_random_position(game_map, map_size_x, map_size_y):
             return x, y
 
 class Game:
-    def __init__(self):
-        self.tile_x = 8
-        self.tile_y = 8
-        self.bit_x = 8
-        self.bit_y = 8
-        self.size_x = self.tile_x*self.bit_x
-        self.size_y = self.tile_y*self.bit_y
-        pyxel.init(self.size_x, self.size_y, fps = 30)
+    def __init__(self, args):
+        self.args = args
+        self.tile_x = args.tile_width
+        self.tile_y = args.tile_height
+        self.bit_x = args.bit_width
+        self.bit_y = args.bit_height
+        self.width = self.tile_x*self.bit_x
+        self.height = self.tile_y*self.bit_y
+        pyxel.init(self.width, self.height, fps = args.fps)
 
         colors = pyxel.colors.to_list()
         print(colors)
         pyxel.load("assets.pyxres")
 
-        # start position
+        # player position
         self.x = 0
         self.y = 0
 
-        self.map_size_x = 24
-        self.map_size_y = 24
+        self.map_size_x = args.map_width
+        self.map_size_y = args.map_height
         self.map_init()
         self.set_random_position()
 
@@ -196,4 +210,17 @@ class Game:
         # draw sprites
         self.draw_tile(self.x, self.y, obj_info["reimu"])
 
-Game()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-bh", "--bit_height", type=int, default=8, help="")
+    parser.add_argument("-bw", "--bit_width", type=int, default=8, help="")
+    parser.add_argument("-mh", "--map_height", type=int, default=24, help="")
+    parser.add_argument("-mw", "--map_width", type=int, default=24, help="")
+    parser.add_argument("-th", "--tile_height", type=int, default=8, help="")
+    parser.add_argument("-tw", "--tile_width", type=int, default=8, help="")
+    parser.add_argument("-fps", "--fps", type=int, default=30, help="")
+    parser.add_argument("-s", "--stop", action="store_true", help="")
+    args = parser.parse_args()
+    pprint.pprint(vars(args))
+
+    Game(args)
