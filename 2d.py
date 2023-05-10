@@ -9,10 +9,12 @@ import uuid
 obj_info = {
     # obj
     "wall" : {"tile_x": 0, "tile_y": 6, "colkey": None, "col": 1},
-    "water" : {"tile_x": 2, "tile_y": 6, "colkey": None, "col": 1},
+    "water" : {"tile_x": 1, "tile_y": 6, "colkey": None, "col": 1},
     "aisle" : {"tile_x": 0, "tile_y": 5, "colkey": None, "col": 0},
-    "grass" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 0},
-    "wood" : {"tile_x": 3, "tile_y": 5, "colkey": None, "col": 1},
+    "grass" : {"tile_x": 1, "tile_y": 5, "colkey": None, "col": 0},
+    "wood" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 1},
+    "status_corner" : {"tile_x": 3, "tile_y": 5, "colkey": 1, "col": 1},
+    "status_edge" : {"tile_x": 4, "tile_y": 5, "colkey": 1, "col": 1},
     # charactor
     "hero" : {"tile_x": 1, "tile_y": 0, "colkey": 0, "col": 1},
     "reimu" : {"tile_x": 2, "tile_y": 0, "colkey": 1, "col": 1},
@@ -132,8 +134,8 @@ def is_collision(params, x, y):
 class Game:
     def __init__(self, params):
         self.params = params
-        self.tile_x = params["tile_width"]
-        self.tile_y = params["tile_height"]
+        self.tile_x = params["visible_tile_width"]
+        self.tile_y = params["visible_tile_height"]
         self.bit_x = params["bit_width"]
         self.bit_y = params["bit_height"]
         self.width = self.tile_x*self.bit_x
@@ -171,7 +173,7 @@ class Game:
                                             self.map_size_x,
                                             self.map_size_y)
 
-    def draw_tile(self, x, y, tile):
+    def draw_tile(self, x, y, tile, inv_x=False, inv_y=False):
         """
         x, y: 描画位置
         tile: image bank上の位置、透明色
@@ -185,8 +187,8 @@ class Game:
             0,
             tile_x*self.bit_x,
             tile_y*self.bit_y,
-            self.bit_x,
-            self.bit_y,
+            self.bit_x*(-1 if inv_x else 1),
+            self.bit_y*(-1 if inv_y else 1),
             colkey)
 
     def update_direction(self):
@@ -217,7 +219,7 @@ class Game:
         self.update_direction()
         if pyxel.frame_count % 5 == 0:
             if pyxel.btn(pyxel.KEY_S):
-                Enemy("enemy1").spawn(self.params)
+                Enemy("enemy4").spawn(self.params)
                 # print(self.params["obj"])
             if pyxel.btn(pyxel.KEY_D):
                 for _, v in self.params["obj"].items():
@@ -231,6 +233,12 @@ class Game:
                 continue
             # print(obj.x, obj.y, obj.name)
             self.draw_tile(obj.x, obj.y, obj_info[obj.name])
+    
+    def draw_status(self):
+        self.draw_tile(0, 0, obj_info["status_corner"])
+        self.draw_tile(1, 0, obj_info["status_corner"], inv_x=True)
+        self.draw_tile(0, 1, obj_info["status_corner"], inv_y=True)
+        self.draw_tile(1, 1, obj_info["status_corner"], inv_x=True, inv_y=True)
 
     # 毎フレーム実際描画する
     def draw(self):
@@ -253,6 +261,7 @@ class Game:
         # draw sprites
         # self.draw_tile(self.x, self.y, obj_info["reimu"])
         self.draw_sprites()
+        self.draw_status()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -260,8 +269,8 @@ if __name__ == '__main__':
     parser.add_argument("-bw", "--bit_width", type=int, default=8, help="")
     parser.add_argument("-mh", "--map_height", type=int, default=24, help="")
     parser.add_argument("-mw", "--map_width", type=int, default=24, help="")
-    parser.add_argument("-th", "--tile_height", type=int, default=8, help="")
-    parser.add_argument("-tw", "--tile_width", type=int, default=8, help="")
+    parser.add_argument("-th", "--visible_tile_height", type=int, default=16, help="")
+    parser.add_argument("-tw", "--visible_tile_width", type=int, default=16, help="")
     parser.add_argument("-fps", "--fps", type=int, default=30, help="")
     parser.add_argument("-s", "--stop", action="store_true", help="")
     args = parser.parse_args()
