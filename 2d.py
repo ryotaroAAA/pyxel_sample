@@ -4,15 +4,7 @@ import pyxel
 import pprint
 import random
 import sys
-
-# default global
-TILE_HEIGHT = 8
-TILE_WIDTH = 8
-BIT_HEIGHT = 8
-BIT_WIDTH = 8
-HEIGHT = TILE_HEIGHT*BIT_HEIGHT
-WIDTH = BIT_WIDTH*BIT_WIDTH
-FPS = 30
+import uuid
 
 obj_info = {
     # obj
@@ -50,6 +42,7 @@ obj_info = {
 
 class Obj:
     def __init__(self, name, tile_x=None, tile_y=None, x=None, y=None, colkey=None, col=False):
+        self.id = str(uuid.uuid4())
         self.name = name
         self.x = x if None else x
         self.y = y if None else y
@@ -57,14 +50,33 @@ class Obj:
         self.tile_y = obj_info["tile_y"] if None else tile_y
         self.colkey = obj_info["colkey"] if None else colkey
         self.col = obj_info["col"] if None else col
+        self.hide = True
+        # self.register()
+        return self
     
+    def register(self, params):
+        if not "obj" in params:
+            params["obj"] = {}
+        params["obj"][self.id] = self
+
+    def unregister(self, params):
+        params["obj"].pop(self.id)
+
     def spawn(self, params, x=None, y=None):
         # game_map = args.
         if type(x) == type(y) == int:
             if x > 0 and y > 0 and is_collision(params["map"], x, y):
                 self.x = x
                 self.y = y
-                self.draw_tile(self.x, self.y, obj_info["reimu"])
+                self.register(params)
+                self.hide = False
+        if x == y == None:
+            x, y = get_random_position(params["map"], params["map_width"], params["map_height"])
+            self.x = x
+            self.y = y
+            self.register(params)
+            self.hide = False
+        return self
 
 class Character(Obj):
     def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
@@ -114,10 +126,10 @@ def is_collision(game_map, x, y):
 class Game:
     def __init__(self, params):
         self.params = params
-        self.tile_x = params.tile_width
-        self.tile_y = params.tile_height
-        self.bit_x = params.bit_width
-        self.bit_y = params.bit_height
+        self.tile_x = params["tile_width"]
+        self.tile_y = params["tile_height"]
+        self.bit_x = params["bit_width"]
+        self.bit_y = params["bit_height"]
         self.width = self.tile_x*self.bit_x
         self.height = self.tile_y*self.bit_y
         pyxel.init(self.width, self.height, fps = args.fps)
@@ -126,14 +138,14 @@ class Game:
         print(colors)
         pyxel.load("assets.pyxres")
 
-        # player position
-        self.x = 0
-        self.y = 0
-
-        self.map_size_x = params.map_width
-        self.map_size_y = params.map_height
+        self.map_size_x = params["map_width"]
+        self.map_size_y = params["map_height"]
         self.map_init()
-        self.set_random_position()
+        # self.set_random_position()
+
+        self.player = Player("reimu").spawn(self.params)
+        self.x = self.player.x
+        self.y = self.player.y
 
         pyxel.run(self.update, self.draw)
 
@@ -196,12 +208,25 @@ class Game:
             if mod and not self.is_collision(x, y):
                 self.x = x
                 self.y = y
+            self.player.x = self.x
+            self.player.y = self.y
 
     # 毎フレームオンメモリ情報を書き換える
     def update(self):
         self.update_direction()
-        if pyxel.btn(pyxel.KEY_S):
-            Enemy("hoge").spawn(self.params)
+        if pyxel.frame_count % 5 == 0:
+            if pyxel.btn(pyxel.KEY_S):
+                Enemy("enemy1").spawn(self.params)
+                # print(self.params["obj"])
+
+    def draw_sprites(self):
+        objects = self.params["obj"]
+        
+        for id, obj in objects.items():
+            if obj.hide:
+                continue
+            # print(obj.x, obj.y, obj.name)
+            self.draw_tile(obj.x, obj.y, obj_info[obj.name])
 
     # 毎フレーム実際描画する
     def draw(self):
@@ -222,7 +247,8 @@ class Game:
                 self.draw_tile(i, j, self.map[j][i])
         
         # draw sprites
-        self.draw_tile(self.x, self.y, obj_info["reimu"])
+        # self.draw_tile(self.x, self.y, obj_info["reimu"])
+        self.draw_sprites()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
