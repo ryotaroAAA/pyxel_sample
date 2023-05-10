@@ -65,7 +65,7 @@ class Obj:
     def spawn(self, params, x=None, y=None):
         # game_map = args.
         if type(x) == type(y) == int:
-            if x > 0 and y > 0 and is_collision(params["map"], x, y):
+            if x > 0 and y > 0 and is_collision(params, x, y):
                 self.x = x
                 self.y = y
                 self.register(params)
@@ -117,11 +117,17 @@ def get_random_position(game_map, map_size_x, map_size_y):
         x = random.randint(0, map_size_x - 1)
         y = random.randint(0, map_size_y - 1)
         if game_map[y][x]["col"] == 0:
-            print(x, y)
             return x, y
 
-def is_collision(game_map, x, y):
-    return game_map[y][x]["col"]
+def is_collision(params, x, y):
+    if params["map"][y][x]["col"]:
+        # print("map_col")
+        return True
+    for id, obj in params["obj"].items():
+        if x == obj.x and y == obj.y:
+            # print("sp_col")
+            return True
+    return False
 
 class Game:
     def __init__(self, params):
@@ -149,8 +155,6 @@ class Game:
 
         pyxel.run(self.update, self.draw)
 
-    # 初期化
-    # マップ、当たり判定、位置、
     def map_init(self):
         self.map = [[0 for _ in range(self.map_size_x)]
             for _ in range(self.map_size_y)]
@@ -166,9 +170,6 @@ class Game:
         self.x, self.y = get_random_position(self.map,
                                             self.map_size_x,
                                             self.map_size_y)
-
-    def is_collision(self, x, y):
-        return self.map[y][x]["col"]
 
     def draw_tile(self, x, y, tile):
         """
@@ -205,7 +206,7 @@ class Game:
             if pyxel.btn(pyxel.KEY_RIGHT):
                 x = x + 1
                 mod = True
-            if mod and not self.is_collision(x, y):
+            if mod and not is_collision(self.params, x, y):
                 self.x = x
                 self.y = y
             self.player.x = self.x
@@ -218,6 +219,9 @@ class Game:
             if pyxel.btn(pyxel.KEY_S):
                 Enemy("enemy1").spawn(self.params)
                 # print(self.params["obj"])
+            if pyxel.btn(pyxel.KEY_D):
+                for _, v in self.params["obj"].items():
+                    pprint.pprint(vars(v))
 
     def draw_sprites(self):
         objects = self.params["obj"]
