@@ -46,6 +46,7 @@ class Obj:
     def __init__(self, name, tile_x=None, tile_y=None, x=None, y=None, colkey=None, col=False):
         self.id = str(uuid.uuid4())
         self.name = name
+        self.attr = []
         self.x = x if None else x
         self.y = y if None else y
         self.tile_x = obj_info["tile_x"] if None else tile_x
@@ -79,6 +80,9 @@ class Obj:
             self.register(params)
             self.hide = False
         return self
+    
+    def kill(self, params):
+        self.unregister(params)
 
 class Character(Obj):
     def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
@@ -98,6 +102,7 @@ class Enemy(Character):
 class Player(Character):
     def __init__(self, name, health=None, attack=None, defense=None, level=None, exp=None, gold=None):
         super().__init__(name, health, attack, defense, level, exp, gold)
+        self.attr.append("player")
 
 class Item(Obj):
     def __init__(self, name, desc=None):
@@ -140,6 +145,7 @@ class Game:
         self.bit_y = params["bit_height"]
         self.width = self.tile_x*self.bit_x
         self.height = self.tile_y*self.bit_y
+        self.status_hide = False
         pyxel.init(self.width, self.height, fps = args.fps)
 
         colors = pyxel.colors.to_list()
@@ -221,9 +227,18 @@ class Game:
             if pyxel.btn(pyxel.KEY_S):
                 Enemy("enemy4").spawn(self.params)
                 # print(self.params["obj"])
+            if pyxel.btn(pyxel.KEY_K):
+                obj_sample = random.choice(list(self.params["obj"].values()))
+                if not "player" in obj_sample.attr:
+                    obj_sample.kill(self.params)
+                # print(self.params["obj"])
             if pyxel.btn(pyxel.KEY_D):
                 for _, v in self.params["obj"].items():
                     pprint.pprint(vars(v))
+                if self.status_hide:
+                    self.status_hide = False
+                else:
+                    self.status_hide = True
 
     def draw_sprites(self):
         objects = self.params["obj"]
@@ -234,11 +249,27 @@ class Game:
             # print(obj.x, obj.y, obj.name)
             self.draw_tile(obj.x, obj.y, obj_info[obj.name])
     
-    def draw_status(self):
-        self.draw_tile(0, 0, obj_info["status_corner"])
-        self.draw_tile(1, 0, obj_info["status_corner"], inv_x=True)
-        self.draw_tile(0, 1, obj_info["status_corner"], inv_y=True)
-        self.draw_tile(1, 1, obj_info["status_corner"], inv_x=True, inv_y=True)
+    def get_camera_corner(self):
+        opt_x = max(self.x - self.tile_x//2, 0)
+        opt_x = min(opt_x, self.map_size_x - self.tile_x)
+        opt_y = max(self.y - self.tile_y//2, 0)
+        opt_y = min(opt_y, self.map_size_y - self.tile_y)
+        return opt_x, opt_y
+
+    def draw_status(self, bar_len=0):
+        if self.status_hide:
+            return
+        # カメラに追従させる
+        opt_x, opt_y = self.get_camera_corner()
+        self.draw_tile(opt_x, opt_y, obj_info["status_corner"])
+        self.draw_tile(opt_x, opt_y + 1, obj_info["status_corner"], inv_y=True)
+        for i in range(bar_len):
+            self.draw_tile(opt_x+i+1, opt_y, obj_info["status_edge"])
+            self.draw_tile(opt_x+i+1, opt_y + 1, obj_info["status_edge"], inv_y=True)
+        self.draw_tile(opt_x + bar_len + 1, opt_y, obj_info["status_corner"], inv_x=True)
+        self.draw_tile(opt_x + bar_len + 1, opt_y + 1, obj_info["status_corner"], inv_x=True, inv_y=True)
+
+        pyxel.text(opt_x*self.bit_x + 5, opt_y*self.bit_y + 5, f"obj: {len(self.params['obj'])}", 7)
 
     # 毎フレーム実際描画する
     def draw(self):
@@ -247,10 +278,7 @@ class Game:
         pyxel.camera()
         
         # draw background
-        opt_x = max(self.x - self.tile_x//2, 0)
-        opt_x = min(opt_x, self.map_size_x - self.tile_x)
-        opt_y = max(self.y - self.tile_y//2, 0)
-        opt_y = min(opt_y, self.map_size_y - self.tile_y)
+        opt_x, opt_y = self.get_camera_corner()
         pyxel.camera(opt_x*self.bit_x, opt_y*self.bit_y)
         
         for i in range(self.map_size_x):
@@ -259,9 +287,8 @@ class Game:
                 self.draw_tile(i, j, self.map[j][i])
         
         # draw sprites
-        # self.draw_tile(self.x, self.y, obj_info["reimu"])
         self.draw_sprites()
-        self.draw_status()
+        self.draw_status(bar_len=5)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
