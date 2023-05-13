@@ -8,41 +8,48 @@ import uuid
 
 obj_info = {
     # obj
-    "wall" : {"tile_x": 0, "tile_y": 6, "colkey": None, "col": 1},
-    "water" : {"tile_x": 1, "tile_y": 6, "colkey": None, "col": 1},
-    "aisle" : {"tile_x": 0, "tile_y": 5, "colkey": None, "col": 0},
-    "grass" : {"tile_x": 1, "tile_y": 5, "colkey": None, "col": 0},
-    "wood" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 1},
-    "status_corner" : {"tile_x": 3, "tile_y": 5, "colkey": 1, "col": 1},
-    "status_edge" : {"tile_x": 4, "tile_y": 5, "colkey": 1, "col": 1},
+    "black" : {"tile_x": 0, "tile_y": 0, "colkey": None, "col": 0, "attr": "obst"},
+    "wall" : {"tile_x": 0, "tile_y": 6, "colkey": None, "col": 1, "attr": "obst"},
+    "water" : {"tile_x": 1, "tile_y": 6, "colkey": None, "col": 1, "attr": "obst"},
+    "aisle" : {"tile_x": 0, "tile_y": 5, "colkey": None, "col": 0, "attr": "obst"},
+    "grass" : {"tile_x": 1, "tile_y": 5, "colkey": None, "col": 0, "attr": "obst"},
+    "wood" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 1, "attr": "obst"},
+    "status_corner" : {"tile_x": 3, "tile_y": 5, "colkey": 1, "col": 1, "attr": "obst"},
+    "status_ver_edge" : {"tile_x": 3, "tile_y": 6, "colkey": 1, "col": 1, "attr": "obst"},
+    "status_hori_edge" : {"tile_x": 4, "tile_y": 5, "colkey": 1, "col": 1, "attr": "obst"},
     # charactor
-    "hero" : {"tile_x": 1, "tile_y": 0, "colkey": 0, "col": 1},
-    "reimu" : {"tile_x": 2, "tile_y": 0, "colkey": 1, "col": 1},
-    "marisa" : {"tile_x": 3, "tile_y": 0, "colkey": 1, "col": 1},
+    "hero" : {"tile_x": 1, "tile_y": 0, "colkey": 0, "col": 1, "attr": "chara"},
+    "reimu" : {"tile_x": 2, "tile_y": 0, "colkey": 1, "col": 1, "attr": "chara"},
+    "marisa" : {"tile_x": 3, "tile_y": 0, "colkey": 1, "col": 1, "attr": "chara"},
     # enemy
-    "enemy1" : {"tile_x": 0, "tile_y": 4, "colkey": 0, "col": 1},
-    "enemy2" : {"tile_x": 1, "tile_y": 4, "colkey": 0, "col": 1},
-    "enemy3" : {"tile_x": 2, "tile_y": 4, "colkey": 0, "col": 1},
-    "enemy4" : {"tile_x": 3, "tile_y": 4, "colkey": 0, "col": 1},
-    "boss" : {"tile_x": 4, "tile_y": 4, "colkey": 0, "col": 1},
+    "enemy1" : {"tile_x": 0, "tile_y": 4, "colkey": 0, "col": 1, "attr": "enemy", "attack": 1, "defence":1, "agility":1, "exp":1, "gold":1},
+    "enemy2" : {"tile_x": 1, "tile_y": 4, "colkey": 0, "col": 1, "attr": "enemy", "attack": 2, "defence":2, "agility":2, "exp":3, "gold":5},
+    "enemy3" : {"tile_x": 2, "tile_y": 4, "colkey": 0, "col": 1, "attr": "enemy", "attack": 5, "defence":5, "agility":5, "exp":5, "gold":20},
+    "enemy4" : {"tile_x": 3, "tile_y": 4, "colkey": 0, "col": 1, "attr": "enemy", "attack": 10, "defence":10, "agility":10, "exp":7, "gold":50},
+    "boss" : {"tile_x": 4, "tile_y": 4, "colkey": 0, "col": 1, "attr": "enemy", "attack": 100, "defence":50, "agility":30, "exp":30, "gold":500},
     # item
     # wepon
-    "wepon1" : {"tile_x": 0, "tile_y": 1, "colkey": 0, "col": 1},
-    "wepon2" : {"tile_x": 1, "tile_y": 1, "colkey": 0, "col": 1},
-    "wepon3" : {"tile_x": 2, "tile_y": 1, "colkey": 0, "col": 1},
-    "wepon4" : {"tile_x": 3, "tile_y": 1, "colkey": 0, "col": 1},
-    "wepon5" : {"tile_x": 4, "tile_y": 1, "colkey": 0, "col": 1},
-    "armor1" : {"tile_x": 0, "tile_y": 2, "colkey": 0, "col": 1},
-    "armor2" : {"tile_x": 1, "tile_y": 2, "colkey": 0, "col": 1},
-    "armor3" : {"tile_x": 2, "tile_y": 2, "colkey": 0, "col": 1},
-    "item1" : {"tile_x": 0, "tile_y": 3, "colkey": 0, "col": 1},
-    "item2" : {"tile_x": 1, "tile_y": 3, "colkey": 0, "col": 1},
-    "item3" : {"tile_x": 2, "tile_y": 3, "colkey": 0, "col": 1},
-    "item4" : {"tile_x": 3, "tile_y": 3, "colkey": 0, "col": 1},
-    "treasure" : {"tile_x": 4, "tile_y": 3, "colkey": 0, "col": 1},
+    "wepon1" : {"tile_x": 0, "tile_y": 1, "colkey": 0, "col": 1, "attr": "wepon", "attack": 1},
+    "wepon2" : {"tile_x": 1, "tile_y": 1, "colkey": 0, "col": 1, "attr": "wepon", "attack": 2},
+    "wepon3" : {"tile_x": 2, "tile_y": 1, "colkey": 0, "col": 1, "attr": "wepon", "attack": 3},
+    "wepon4" : {"tile_x": 3, "tile_y": 1, "colkey": 0, "col": 1, "attr": "wepon", "attack": 5},
+    "wepon5" : {"tile_x": 4, "tile_y": 1, "colkey": 0, "col": 1, "attr": "wepon", "attack": 10},
+    "armor1" : {"tile_x": 0, "tile_y": 2, "colkey": 0, "col": 1, "attr": "wepon", "defence": 1},
+    "armor2" : {"tile_x": 1, "tile_y": 2, "colkey": 0, "col": 1, "attr": "wepon", "defence": 3},
+    "armor3" : {"tile_x": 2, "tile_y": 2, "colkey": 0, "col": 1, "attr": "wepon", "defence": 5},
+    "item1" : {"tile_x": 0, "tile_y": 3, "colkey": 0, "col": 1, "attr": "item", "heal": 1},
+    "item2" : {"tile_x": 1, "tile_y": 3, "colkey": 0, "col": 1, "attr": "item", "heal": 2},
+    "item3" : {"tile_x": 2, "tile_y": 3, "colkey": 0, "col": 1, "attr": "item", "heal": 5},
+    "item4" : {"tile_x": 3, "tile_y": 3, "colkey": 0, "col": 1, "attr": "item", "heal": 10},
+    "treasure" : {"tile_x": 4, "tile_y": 3, "colkey": 0, "col": 1, "attr": "item", "heal": 99},
 }
 
 params = {}
+obsts = {}
+charas = {}
+enemys = {}
+items = {}
+wepons = {}
 
 class Obj:
     def __init__(self, name, tile_x=None, tile_y=None, x=None, y=None, colkey=None, col=False):
@@ -57,6 +64,7 @@ class Obj:
         self.col = obj_info.get("col", col)
         self.hide = True
         # self.register()
+        print(name)
         return self
     
     def register(self):
@@ -65,6 +73,7 @@ class Obj:
         params["obj"][self.id] = self
 
     def unregister(self):
+        # pprint.pprint(params["obj"])
         params["obj"].pop(self.id)
 
     def spawn(self, x=None, y=None):
@@ -87,42 +96,57 @@ class Obj:
         self.unregister()
 
 class Character(Obj):
-    def __init__(self, name, level, hp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
+    def __init__(self, name, level, hp, mp, attack, defence, agility, gold, exp):
         super().__init__(name)
-        self.level = obj_info.get("level", level)
-        self.hp = obj_info.get("hp", hp)
-        self.attack = obj_info.get("attack", attack)
-        self.defence = obj_info.get("defence", defence)
-        self.agility = obj_info.get("agility", agility)
-        self.gold = obj_info.get("gold", gold)
-        self.exp = obj_info.get("exp", exp)
+        obj = obj_info[name]
+        self.level = obj.get("level", level)
+        self.hp = obj.get("hp", hp)
+        self.max_hp = obj.get("hp", hp)
+        self.mp = obj.get("mp", mp)
+        self.max_mp = obj.get("mp", mp)
+        self.attack = obj.get("attack", attack)
+        self.defence = obj.get("defence", defence)
+        self.agility = obj.get("agility", agility)
+        self.gold = obj.get("gold", gold)
+        self.exp = obj.get("exp", exp)
 
 class Enemy(Character):
-    def __init__(self, name, level=1, hp=5, attack=1, defence=1, agility=1, gold=1, exp=1):
-        super().__init__(name, level, hp, attack, defence, agility, gold, exp)
+    def __init__(self, name, level=1, hp=5, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
+        super().__init__(name, level, hp, mp, attack, defence, agility, gold, exp)
         self.attr.append("enemy")
 
 class Player(Character):
-    def __init__(self, name, level=1, hp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
-        super().__init__(name, level, hp, attack, defence, agility, gold, exp)
+    def __init__(self, name, level=1, hp=10, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
+        super().__init__(name, level, hp, mp, attack, defence, agility, gold, exp)
         self.attr.append("player")
         self.beat_enemy = 0
+        self.next_level_exp = 10
+    
+    def level_up(self):
+        self.level += 1
+        self.max_hp += random.randint(0,5)
+        self.max_mp += random.randint(0,5)
+        self.attack += random.randint(0,2)
+        self.defence += random.randint(0,2)
+        self.agility += random.randint(0,2)
+        self.hp = self.max_hp
+        self.mp = self.max_mp
 
 class Item(Obj):
-    def __init__(self, name, desc=None):
-        self.name = name
-        self.desc = dbj_info["desc"] if None else desc
+    def __init__(self, name, heal=1, desc=None):
+        super().__init__(name)
+        obj = obj_info[name]
+        self.desc = obj.get("desc", desc)
+        self.heal = obj.get("heal", heal)
         self.attr.append("item")
 
 class Weapon(Item):
-    def __init__(self, name, attack=None):
+    def __init__(self, name, attack=0, defence=0):
         super().__init__(name)
-        self.attack = dbj_info["attack"] if None else attack
-
-class Armor(Item):
-    def __init__(self, name, defence=None):
-        super().__init__(name)
-        self.defence = dbj_info["defence"] if None else defence
+        obj = obj_info[name]
+        self.attack = obj.get("attack", attack)
+        self.defence = obj.get("defence", defence)
+        self.attr.append("weapon")
 
 def get_random_position():
     game_map = params["map"]
@@ -167,7 +191,7 @@ class Game:
         pyxel.init(self.width, self.height, fps = args.fps)
 
         colors = pyxel.colors.to_list()
-        print(colors)
+        # print(colors)
         pyxel.load("assets.pyxres")
 
         self.map_size_x = params["map_width"]
@@ -178,7 +202,19 @@ class Game:
         self.player = Player("reimu").spawn()
         self.x = self.player.x
         self.y = self.player.y
-
+        
+        for k, tile in obj_info.items():
+            if tile["attr"] == "obst":
+                obsts[k] = tile
+            elif tile["attr"] == "chara":
+                charas[k] = tile
+            elif tile["attr"] == "enemy":
+                enemys[k] = tile
+            elif tile["attr"] == "wepon":
+                wepons[k] = tile
+            elif tile["attr"] == "item":
+                items[k] = tile
+                
         pyxel.run(self.update, self.draw)
 
     def map_init(self):
@@ -187,15 +223,19 @@ class Game:
         for i in range(self.map_size_x):
             for j in range(self.map_size_y):
                 x, y = pyxel.tilemap(0).pget(i, j)
+                not_found = True
                 for _, tile in obj_info.items():
                     if tile["tile_x"] == x and tile["tile_y"] == y:
                         self.map[j][i] = tile
+                        not_found = False
+                        break
+                if not_found:
+                    print(f"tile not found, {i} {j}")
+                    raise RuntimeError
         params["map"] = self.map
 
     def set_random_position(self):
-        self.x, self.y = get_random_position(self.map,
-                                            self.map_size_x,
-                                            self.map_size_y)
+        self.x, self.y = get_random_position()
 
     def draw_tile(self, x, y, tile, inv_x=False, inv_y=False):
         """
@@ -218,36 +258,47 @@ class Game:
     def game_over(self):
         self.is_game_over = True
 
+    def add_exp(self, exp):
+        player = self.player
+        while True:
+            if player.next_level_exp - exp > 0:
+                player.next_level_exp -= exp
+                break
+            else:
+                exp -= player.next_level_exp
+                player.next_level_exp = 10
+                player.level_up()
+        
     def battle(self, enemy):
         player = self.player
         first, second = (player, enemy) if player.agility > enemy.agility else (enemy, player)
         turn = 0
         while(True):
-            def one_turn(atk_size, def_size):
+            def one_turn(atk_side, def_side):
                 battle_end = False
-                def_size.hp -= (atk_size.attack - def_size.defence)
-                if def_size.hp <= 0:
-                    if def_size == player:
+                def_side.hp -= max((atk_side.attack - def_side.defence), 1)
+                if def_side.hp <= 0:
+                    if def_side == player:
                         self.game_over()
                     else:
                         player.exp += enemy.exp
                         player.gold += enemy.gold
-                    def_size.kill()
+                        self.add_exp(enemy.exp)
+                        def_side.kill()
                     battle_end = True
                 return battle_end
-                    
             battle_end = one_turn(first, second)
             if battle_end:
                 break
             battle_end = one_turn(second, first)
             if battle_end:
                 break
-            if (turn:=turn+1 > 100):
+            if ((turn := turn + 1) > 100):
                 print("too many turn")
                 raise RuntimeError
 
     def update_direction(self):
-        if pyxel.frame_count % 5 == 0:
+        if pyxel.frame_count % 2 == 0:
             x = self.x
             y = self.y
             mod = False
@@ -263,38 +314,61 @@ class Game:
             if pyxel.btn(pyxel.KEY_RIGHT):
                 x = x + 1
                 mod = True
-            # enemyなら消す
-            enemy = None
+            # enemy/item なら消す
+            col_obj = None
             for id, obj in params["obj"].items():
                 if x == obj.x and y == obj.y:
                     # print(vars(obj))
-                    if "enemy" in obj.attr:
-                        enemy = obj
-            if not enemy == None:
-                self.battle(enemy)
-            
+                    col_obj = obj
+                    break
+            if not col_obj == None: 
+                if "enemy" in col_obj.attr:
+                    self.battle(col_obj)
+                elif "weapon" in col_obj.attr:
+                    # pprint.pprint(vars(col_obj))
+                    self.player.attack += col_obj.attack
+                    self.player.defence += col_obj.defence
+                    col_obj.kill()
+                elif "item" in col_obj.attr:
+                    if col_obj.name == "treasure":
+                        self.add_exp(random.randint(1, 114514))
+                    else:
+                        self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
+                    col_obj.kill()
             if mod and not is_collision(x, y):
                 self.x = x
                 self.y = y
-            
             self.player.x = self.x
             self.player.y = self.y
 
     # 毎フレームオンメモリ情報を書き換える
     def update(self):
+        if self.is_game_over:
+            if pyxel.frame_count % 2 == 0:
+                if pyxel.btn(pyxel.KEY_R):
+                    self.set_random_position()
+                    self.player.hp = self.player.max_hp
+                    self.player.mp = self.player.max_mp
+                    self.is_game_over = False
+            return
         self.update_direction()
-        if pyxel.frame_count % 5 == 0:
+        if pyxel.frame_count % 2 == 0:
             if pyxel.btn(pyxel.KEY_S):
-                Enemy("enemy3").spawn()
-                # print(self.params["obj"])
+                sample = random.choice(list(enemys.keys()))
+                Enemy(sample).spawn()
+            if pyxel.btn(pyxel.KEY_W):
+                sample = random.choice(list(wepons.keys()))
+                Weapon(sample).spawn()
+            if pyxel.btn(pyxel.KEY_I):
+                sample = random.choice(list(items.keys()))
+                Item(sample).spawn()
             if pyxel.btn(pyxel.KEY_K):
                 obj_sample = random.choice(list(params["obj"].values()))
                 if not "player" in obj_sample.attr:
                     obj_sample.kill(params)
                 # print(self.params["obj"])
             if pyxel.btn(pyxel.KEY_D):
-                for _, v in params["obj"].items():
-                    pprint.pprint(vars(v))
+                # for _, v in params["obj"].items():
                 if self.status_hide:
                     self.status_hide = False
                 else:
@@ -316,28 +390,57 @@ class Game:
         opt_y = min(opt_y, self.map_size_y - self.tile_y)
         return opt_x, opt_y
 
-    def draw_status(self, bar_len=0):
+    def draw_status(self, bar_x=0, bar_y=0):
         if self.status_hide:
             return
+
         # カメラに追従させる
         opt_x, opt_y = self.get_camera_corner()
-        self.draw_tile(opt_x, opt_y, obj_info["status_corner"])
-        self.draw_tile(opt_x, opt_y + 1, obj_info["status_corner"], inv_y=True)
-        for i in range(bar_len):
-            self.draw_tile(opt_x+i+1, opt_y, obj_info["status_edge"])
-            self.draw_tile(opt_x+i+1, opt_y + 1, obj_info["status_edge"], inv_y=True)
-        self.draw_tile(opt_x + bar_len + 1, opt_y, obj_info["status_corner"], inv_x=True)
-        self.draw_tile(opt_x + bar_len + 1, opt_y + 1, obj_info["status_corner"], inv_x=True, inv_y=True)            
-        
-        text = f"{len(params['obj'])} {self.player.hp} {self.player.gold} {self.player.exp} "
-        
-        if self.is_game_over:
-            text = "game over"
+        for i in range(bar_x):
+            for j in range(bar_y):
+                if i in [0, bar_x - 1] or j in [0, bar_y - 1]:
+                    inv_x = (i == bar_x - 1)
+                    inv_y = (j == bar_y - 1)
+                    tile_type = obj_info["status_hori_edge"]
+                    if i == 0 or i == bar_x - 1:
+                        tile_type = obj_info["status_ver_edge"]
+                    if i in [0, bar_x - 1] and j in [0, bar_y - 1]:
+                        tile_type = obj_info["status_corner"]
+                    self.draw_tile(opt_x + i,
+                                opt_y + j,
+                                tile_type,
+                                inv_x=inv_x,
+                                inv_y=inv_y)
+                else:
+                    self.draw_tile(opt_x + i,
+                        opt_y + j,
+                        obj_info["black"])
 
-        pyxel.text(opt_x*self.bit_x + 5,
-                   opt_y*self.bit_y + 5, 
-                   text,
-                   7)
+        def draw_text(line, text):
+            pyxel.text(opt_x*self.bit_x + 5,
+                        opt_y*self.bit_y + 5 + 6*line, 
+                        text,
+                        7)
+        if self.is_game_over:
+            draw_text(0, "geme_over")
+        else:
+            # text = f"{len(params['obj'])} {self.player.hp} {self.player.gold} {self.player.exp} "
+            # pyxel.text(opt_x*self.bit_x + 5,
+            #             opt_y*self.bit_y + 5, 
+            #             text,
+            #             7)
+            me = self.player
+            text_list = []
+            text_list.append(f"LV:{me.level}")
+            text_list.append(f"HP:{me.hp}/{me.max_hp}")
+            text_list.append(f"MP:{me.mp}/{me.max_mp}")
+            text_list.append(f"ATK:{me.attack}")
+            text_list.append(f"DEF:{me.defence}")
+            text_list.append(f"AGI:{me.agility}")
+            text_list.append(f"GOLD:{me.gold}")
+            text_list.append(f"EXP:{me.exp}")
+            for i, text in enumerate(text_list):
+                draw_text(i, text)
 
     # 毎フレーム実際描画する
     def draw(self):
@@ -351,21 +454,20 @@ class Game:
         
         for i in range(self.map_size_x):
             for j in range(self.map_size_y):
-                # print(self.x, self.y, i, j, opt_x, opt_y)
                 self.draw_tile(i, j, self.map[j][i])
         
         # draw sprites
         self.draw_sprites()
-        self.draw_status(bar_len=5)
+        self.draw_status(bar_x=6, bar_y=7)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-bh", "--bit_height", type=int, default=8, help="")
     parser.add_argument("-bw", "--bit_width", type=int, default=8, help="")
-    parser.add_argument("-mh", "--map_height", type=int, default=24, help="")
-    parser.add_argument("-mw", "--map_width", type=int, default=24, help="")
-    parser.add_argument("-th", "--visible_tile_height", type=int, default=16, help="")
-    parser.add_argument("-tw", "--visible_tile_width", type=int, default=16, help="")
+    parser.add_argument("-mh", "--map_height", type=int, default=40, help="")
+    parser.add_argument("-mw", "--map_width", type=int, default=40, help="")
+    parser.add_argument("-th", "--visible_tile_height", type=int, default=40, help="")
+    parser.add_argument("-tw", "--visible_tile_width", type=int, default=40, help="")
     parser.add_argument("-fps", "--fps", type=int, default=30, help="")
     parser.add_argument("-s", "--stop", action="store_true", help="")
     args = parser.parse_args()
