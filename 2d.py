@@ -223,7 +223,8 @@ class Game:
         first, second = (player, enemy) if player.agility > enemy.agility else (enemy, player)
         turn = 0
         while(True):
-            def one_turn(atk_size, def_size): 
+            def one_turn(atk_size, def_size):
+                battle_end = False
                 def_size.hp -= (atk_size.attack - def_size.defence)
                 if def_size.hp <= 0:
                     if def_size == player:
@@ -232,9 +233,15 @@ class Game:
                         player.exp += enemy.exp
                         player.gold += enemy.gold
                     def_size.kill()
-                    break
-            one_turn(first, second)
-            one_turn(second, first)
+                    battle_end = True
+                return battle_end
+                    
+            battle_end = one_turn(first, second)
+            if battle_end:
+                break
+            battle_end = one_turn(second, first)
+            if battle_end:
+                break
             if (turn:=turn+1 > 100):
                 print("too many turn")
                 raise RuntimeError
