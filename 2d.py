@@ -42,72 +42,77 @@ obj_info = {
     "treasure" : {"tile_x": 4, "tile_y": 3, "colkey": 0, "col": 1},
 }
 
+params = {}
+
 class Obj:
     def __init__(self, name, tile_x=None, tile_y=None, x=None, y=None, colkey=None, col=False):
         self.id = str(uuid.uuid4())
         self.name = name
         self.attr = []
-        self.x = x if None else x
-        self.y = y if None else y
-        self.tile_x = obj_info["tile_x"] if None else tile_x
-        self.tile_y = obj_info["tile_y"] if None else tile_y
-        self.colkey = obj_info["colkey"] if None else colkey
-        self.col = obj_info["col"] if None else col
+        self.x = obj_info.get("x", x)
+        self.y = obj_info.get("y", y)
+        self.tile_x = obj_info.get("tile_x", tile_x)
+        self.tile_y = obj_info.get("tile_y", tile_y)
+        self.colkey = obj_info.get("colkey", colkey)
+        self.col = obj_info.get("col", col)
         self.hide = True
         # self.register()
         return self
     
-    def register(self, params):
+    def register(self):
         if not "obj" in params:
             params["obj"] = {}
         params["obj"][self.id] = self
 
-    def unregister(self, params):
+    def unregister(self):
         params["obj"].pop(self.id)
 
-    def spawn(self, params, x=None, y=None):
+    def spawn(self, x=None, y=None):
         # game_map = args.
         if type(x) == type(y) == int:
-            if x > 0 and y > 0 and is_collision(params, x, y):
+            if x > 0 and y > 0 and is_collision(x, y):
                 self.x = x
                 self.y = y
-                self.register(params)
+                self.register()
                 self.hide = False
         if x == y == None:
-            x, y = get_random_position(params["map"], params["map_width"], params["map_height"])
+            x, y = get_random_position()
             self.x = x
             self.y = y
-            self.register(params)
+            self.register()
             self.hide = False
         return self
     
-    def kill(self, params):
-        self.unregister(params)
+    def kill(self):
+        self.unregister()
 
 class Character(Obj):
-    def __init__(self, name, level=None, health=None, attack=None, defense=None, agility=None, gold=None, exp=None):
+    def __init__(self, name, level, hp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
         super().__init__(name)
-        self.level = obj_info["level"] if None else level
-        self.health = obj_info["health"] if None else health
-        self.attack = obj_info["attack"] if None else attack
-        self.defense = obj_info["defense"] if None else defense
-        self.agility = obj_info["agility"] if None else agility
-        self.gold = obj_info["gold"] if None else gold
-        self.exp = obj_info["exp"] if None else exp
+        self.level = obj_info.get("level", level)
+        self.hp = obj_info.get("hp", hp)
+        self.attack = obj_info.get("attack", attack)
+        self.defence = obj_info.get("defence", defence)
+        self.agility = obj_info.get("agility", agility)
+        self.gold = obj_info.get("gold", gold)
+        self.exp = obj_info.get("exp", exp)
 
 class Enemy(Character):
-    def __init__(self, name, health=None, attack=None, defense=None, agility=None, exp=None, gold=None):
-        super().__init__(name, health, attack, defense, agility, exp, gold)
+    def __init__(self, name, level=1, hp=5, attack=1, defence=1, agility=1, gold=1, exp=1):
+        super().__init__(name, level, hp, attack, defence, agility, gold, exp)
+        self.attr.append("enemy")
 
 class Player(Character):
-    def __init__(self, name, health=None, attack=None, defense=None, level=None, exp=None, gold=None):
-        super().__init__(name, health, attack, defense, level, exp, gold)
+    def __init__(self, name, level=1, hp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
+        super().__init__(name, level, hp, attack, defence, agility, gold, exp)
         self.attr.append("player")
+        self.beat_enemy = 0
 
 class Item(Obj):
     def __init__(self, name, desc=None):
         self.name = name
         self.desc = dbj_info["desc"] if None else desc
+        self.attr.append("item")
 
 class Weapon(Item):
     def __init__(self, name, attack=None):
@@ -115,18 +120,31 @@ class Weapon(Item):
         self.attack = dbj_info["attack"] if None else attack
 
 class Armor(Item):
-    def __init__(self, name, defense=None):
+    def __init__(self, name, defence=None):
         super().__init__(name)
-        self.defense = dbj_info["defense"] if None else defense
+        self.defence = dbj_info["defence"] if None else defence
 
-def get_random_position(game_map, map_size_x, map_size_y):
+def get_random_position():
+    game_map = params["map"]
+    map_size_x = params["map_width"]
+    map_size_y = params["map_height"]
     while True:
         x = random.randint(0, map_size_x - 1)
         y = random.randint(0, map_size_y - 1)
         if game_map[y][x]["col"] == 0:
             return x, y
 
-def is_collision(params, x, y):
+def is_collision(x, y):
+    if params["map"][y][x]["col"]:
+        # print("map_col")
+        return True
+    for id, obj in params["obj"].items():
+        if x == obj.x and y == obj.y:
+            # print("sp_col")
+            return True
+    return False
+
+def collision_obj(x, y):
     if params["map"][y][x]["col"]:
         # print("map_col")
         return True
@@ -137,8 +155,7 @@ def is_collision(params, x, y):
     return False
 
 class Game:
-    def __init__(self, params):
-        self.params = params
+    def __init__(self):
         self.tile_x = params["visible_tile_width"]
         self.tile_y = params["visible_tile_height"]
         self.bit_x = params["bit_width"]
@@ -146,6 +163,7 @@ class Game:
         self.width = self.tile_x*self.bit_x
         self.height = self.tile_y*self.bit_y
         self.status_hide = False
+        self.is_game_over = False
         pyxel.init(self.width, self.height, fps = args.fps)
 
         colors = pyxel.colors.to_list()
@@ -157,7 +175,7 @@ class Game:
         self.map_init()
         # self.set_random_position()
 
-        self.player = Player("reimu").spawn(self.params)
+        self.player = Player("reimu").spawn()
         self.x = self.player.x
         self.y = self.player.y
 
@@ -172,7 +190,7 @@ class Game:
                 for _, tile in obj_info.items():
                     if tile["tile_x"] == x and tile["tile_y"] == y:
                         self.map[j][i] = tile
-        self.params["map"] = self.map
+        params["map"] = self.map
 
     def set_random_position(self):
         self.x, self.y = get_random_position(self.map,
@@ -197,6 +215,30 @@ class Game:
             self.bit_y*(-1 if inv_y else 1),
             colkey)
 
+    def game_over(self):
+        self.is_game_over = True
+
+    def battle(self, enemy):
+        player = self.player
+        first, second = (player, enemy) if player.agility > enemy.agility else (enemy, player)
+        turn = 0
+        while(True):
+            def one_turn(atk_size, def_size): 
+                def_size.hp -= (atk_size.attack - def_size.defence)
+                if def_size.hp <= 0:
+                    if def_size == player:
+                        self.game_over()
+                    else:
+                        player.exp += enemy.exp
+                        player.gold += enemy.gold
+                    def_size.kill()
+                    break
+            one_turn(first, second)
+            one_turn(second, first)
+            if (turn:=turn+1 > 100):
+                print("too many turn")
+                raise RuntimeError
+
     def update_direction(self):
         if pyxel.frame_count % 5 == 0:
             x = self.x
@@ -214,9 +256,20 @@ class Game:
             if pyxel.btn(pyxel.KEY_RIGHT):
                 x = x + 1
                 mod = True
-            if mod and not is_collision(self.params, x, y):
+            # enemyなら消す
+            enemy = None
+            for id, obj in params["obj"].items():
+                if x == obj.x and y == obj.y:
+                    # print(vars(obj))
+                    if "enemy" in obj.attr:
+                        enemy = obj
+            if not enemy == None:
+                self.battle(enemy)
+            
+            if mod and not is_collision(x, y):
                 self.x = x
                 self.y = y
+            
             self.player.x = self.x
             self.player.y = self.y
 
@@ -225,15 +278,15 @@ class Game:
         self.update_direction()
         if pyxel.frame_count % 5 == 0:
             if pyxel.btn(pyxel.KEY_S):
-                Enemy("enemy4").spawn(self.params)
+                Enemy("enemy3").spawn()
                 # print(self.params["obj"])
             if pyxel.btn(pyxel.KEY_K):
-                obj_sample = random.choice(list(self.params["obj"].values()))
+                obj_sample = random.choice(list(params["obj"].values()))
                 if not "player" in obj_sample.attr:
-                    obj_sample.kill(self.params)
+                    obj_sample.kill(params)
                 # print(self.params["obj"])
             if pyxel.btn(pyxel.KEY_D):
-                for _, v in self.params["obj"].items():
+                for _, v in params["obj"].items():
                     pprint.pprint(vars(v))
                 if self.status_hide:
                     self.status_hide = False
@@ -241,7 +294,7 @@ class Game:
                     self.status_hide = True
 
     def draw_sprites(self):
-        objects = self.params["obj"]
+        objects = params["obj"]
         
         for id, obj in objects.items():
             if obj.hide:
@@ -267,9 +320,17 @@ class Game:
             self.draw_tile(opt_x+i+1, opt_y, obj_info["status_edge"])
             self.draw_tile(opt_x+i+1, opt_y + 1, obj_info["status_edge"], inv_y=True)
         self.draw_tile(opt_x + bar_len + 1, opt_y, obj_info["status_corner"], inv_x=True)
-        self.draw_tile(opt_x + bar_len + 1, opt_y + 1, obj_info["status_corner"], inv_x=True, inv_y=True)
+        self.draw_tile(opt_x + bar_len + 1, opt_y + 1, obj_info["status_corner"], inv_x=True, inv_y=True)            
+        
+        text = f"{len(params['obj'])} {self.player.hp} {self.player.gold} {self.player.exp} "
+        
+        if self.is_game_over:
+            text = "game over"
 
-        pyxel.text(opt_x*self.bit_x + 5, opt_y*self.bit_y + 5, f"obj: {len(self.params['obj'])}", 7)
+        pyxel.text(opt_x*self.bit_x + 5,
+                   opt_y*self.bit_y + 5, 
+                   text,
+                   7)
 
     # 毎フレーム実際描画する
     def draw(self):
@@ -304,5 +365,4 @@ if __name__ == '__main__':
     params = vars(args)
 
     pprint.pprint(params)
-
-    Game(params)
+    Game()
