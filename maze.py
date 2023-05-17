@@ -1,22 +1,8 @@
-import copy
-from telnetlib import NOP
 # from tkinter import LEFT
-import cython
 from dataclasses import *
-import logging
-import logging.config
-import numpy as np
-from pathlib import Path
-import sys
-import time
-import traceback
 from typing import *
 
-from hexdump import hexdump
 from pprint import *
-from print_color import print
-from tabulate import tabulate
-import yaml
 from enum import auto, Enum
 import random
 
@@ -372,6 +358,7 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--loop", type=int, default=-1, help="loop")
     parser.add_argument("-r", "--rom", default="", help="rom")
     args = parser.parse_args()
-    print(vars(args), tag="args", tag_color="green", color="white")
+    # print(vars(args), tag="args", tag_color="green", color="white")
+    print(vars(args))
 
     run()
