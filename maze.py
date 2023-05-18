@@ -31,20 +31,15 @@ AISLE_COLOR = WHITE
 WALL_COLOR = BLACK
 GOAL_COLOR = ORANGE
 
-scale = 5
-TILE_SIZE = (30, 30)
-screen_size = (TILE_SIZE[0]*scale, TILE_SIZE[0]*scale)
-TILE = (screen_size[0]//TILE_SIZE[0], screen_size[1]//TILE_SIZE[1])
-maze = []
+params = {}
 
-def init_scale(scale_):
-    global scale, screen_size, TILE_SIZE, TILE
-    scale = scale_
-    screen_size = (TILE_SIZE[0]*scale, TILE_SIZE[0]*scale)
-    TILE = (screen_size[0]//TILE_SIZE[0], screen_size[1]//TILE_SIZE[1])
+def init_scale(scale):
+    params["scale"] = scale
 
-x = TILE_SIZE[0]
-y = TILE_SIZE[1]
+    params["screen_size_x"] = params["tile_size_x"] * params["scale"]
+    params["screen_size_y"] = params["tile_size_y"] * params["scale"]
+    params["tile_x"] = params["screen_size_x"] // args.tile_size_x
+    params["tile_y"] = params["screen_size_y"] // args.tile_size_y
 
 class Pos:
     def __init__(self, pos, maze):
@@ -61,7 +56,8 @@ class Pos:
         ]
 
     def is_collision(self, x, y):
-        if 0 <= x < TILE[0] and 0 <= y < TILE[1]:
+        maze = params["maze"]
+        if 0 <= x < params["tile_x"] and 0 <= y < params["tile_y"]:
             if maze[y][x] in [ObjAttr.WALL]:
                 return True
             else:
@@ -69,7 +65,8 @@ class Pos:
         return True
 
     def detect_obj(self, x, y):
-        if 0 <= x < TILE[0] and 0 <= y < TILE[1]:
+        maze = params["maze"]
+        if 0 <= x < params["tile_x"] and 0 <= y < params["tile_y"]:
             return maze[y][x]
         else:
             return False
@@ -94,7 +91,7 @@ class Pos:
 
     def chack_2step_forward(self, dire):
         x, y = self.get_move_pos(dire, 2)
-        if (x in range(TILE[0]) and y in range(TILE[0]) and
+        if (x in range(params["tile_x"]) and y in range(params["tile_x"]) and
                 not (x, y) in self.stack):
             return self.maze[y][x]
         else:
@@ -150,6 +147,7 @@ class Pos:
         return False
 
     def bar_down(self):
+        maze = params["maze"]
         a, b = self.x, self.y
         self.movable_init()
         if not self.y == 2:
@@ -168,14 +166,13 @@ def is_eq_objattr(maze, pos, attr):
     return maze[pos[1]][pos[0]] == attr
 
 def wall_extend():
-    global maze
     maze = []
-    for j in range(TILE[1]):
+    for j in range(params["tile_y"]):
         row = []
-        for i in range(TILE[0]):
+        for i in range(params["tile_x"]):
             # outer wall
             if (i == 0 or j == 0 or
-                    i == TILE[0]-1 or j == TILE[1]-1):
+                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
                 row.append(ObjAttr.WALL)
             else:
                 row.append(ObjAttr.AISLE)
@@ -185,15 +182,15 @@ def wall_extend():
 
     print("[wall_extend]")
     
-    for j in range(TILE[1]):
+    for j in range(params["tile_y"]):
         print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
     
     is_wall_cand = (lambda i, j: 
-                    i in range(1, TILE[0]-1) and
-                    j in range(1, TILE[1]-1) and
+                    i in range(1, params["tile_x"]-1) and
+                    j in range(1, params["tile_y"]-1) and
                     i%2 == 0 and j%2 == 0)
-    cand = [(i, j) for i in range(TILE[0])
-        for j in range(TILE[1]) if is_wall_cand(i, j)]
+    cand = [(i, j) for i in range(params["tile_x"])
+        for j in range(params["tile_y"]) if is_wall_cand(i, j)]
     while len(cand) > 0:
         # decide start position
         index_cand = random.randint(0, len(cand) - 1)
@@ -205,18 +202,19 @@ def wall_extend():
         pos = Pos(rand_cand, maze)
         pos.wall_extend()
 
-    for j in range(TILE[1]):
+    for j in range(params["tile_y"]):
         print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
+    
+    params["maze"] = maze
 
 def bar_down():
-    global maze
     maze = []
-    for j in range(TILE[1]):
+    for j in range(params["tile_y"]):
         row = []
-        for i in range(TILE[0]):
+        for i in range(params["tile_x"]):
             # outer wall
             if (i == 0 or j == 0 or
-                    i == TILE[0]-1 or j == TILE[1]-1):
+                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
                 row.append(ObjAttr.WALL)
             elif (i%2 == 0 and j%2 == 0):
                 row.append(ObjAttr.WALL)
@@ -227,10 +225,10 @@ def bar_down():
         maze.append(row)
 
     print("[bar_down]")
-    for j in range(TILE[1]):
-        for i in range(TILE[0]):
+    for j in range(params["tile_y"]):
+        for i in range(params["tile_x"]):
             if (i == 0 or j == 0 or
-                    i == TILE[0]-1 or j == TILE[1]-1):
+                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
                 # nothing to do
                 pass
             elif (i%2 == 0 and j%2 == 0):
@@ -239,32 +237,43 @@ def bar_down():
             else:
                 continue
     
-    for j in range(TILE[1]):
+    for j in range(params["tile_y"]):
         print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
+
+    params["maze"] = maze
 
 def aisle_extend():
     return
 
 def make_maze():
-    global x, y, maze
-    
-    # bar_down()
-    wall_extend()
+    if params["algorithm"] == "bar_down":
+        bar_down()
+    elif params["algorithm"] == "wall_extend":
+        wall_extend()
+    else:
+        print("unknown algorithm")
+        raise
 
+    x = params["tile_size_x"]
+    y = params["tile_size_y"]
+
+    maze = params["maze"]
+    print("test", maze)
+    print(params)
     while True:
-        i = random.randint(0, TILE[0]-1)
-        j = random.randint(0, TILE[1]-1)
+        i = random.randint(0, params["tile_x"]-1)
+        j = random.randint(0, params["tile_y"]-1)
         if (maze[j][i] == ObjAttr.AISLE and
-                not i == x//TILE_SIZE[0] and not j == y//TILE_SIZE[1]):
+                not i == x//params["tile_size_x"] and not j == y//params["tile_size_y"]):
             maze[j][i] = ObjAttr.GOAL
-            # print(f"goal:({i}, {j}), cur:({x//TILE_SIZE[0]}, {y//TILE_SIZE[1]})")
+            # print(f"goal:({i}, {j}), cur:({x//params["tile_size_x"]}, {y//params["tile_size_y"]})")
             break
 
 def is_not_collision(x, y):
-    global maze
-    t_x = x // TILE_SIZE[0]
-    t_y = y // TILE_SIZE[1]
-    if 0 <= t_x < TILE[0] and 0 <= t_y < TILE[1]:
+    maze = params["maze"]
+    t_x = x // params["tile_size_x"]
+    t_y = y // params["tile_size_y"]
+    if 0 <= t_x < params["tile_x"] and 0 <= t_y < params["tile_y"]:
         if maze[t_y][t_x] == ObjAttr.AISLE:
             return True
         elif maze[t_y][t_x] == ObjAttr.GOAL:
@@ -273,18 +282,17 @@ def is_not_collision(x, y):
     return False
 
 def run():
-    global maze, x, y, scale
-    # assert((x % 10 == 0) and (y % 10 == 0), "screen size error")
-
-    print(scale)
-    print(screen_size)
     pygame.init()
     clock = pygame.time.Clock()
     pygame.key.set_repeat(100, 50)
     make_maze()
-    
-    count = 0
+    maze = params["maze"]
 
+    x = params["tile_size_x"]
+    y = params["tile_size_y"]
+
+    count = 0
+    screen_size = (params["screen_size_x"], params["screen_size_y"])
     screen = pygame.display.set_mode(screen_size)
     while True:
         for event in pygame.event.get():
@@ -296,52 +304,52 @@ def run():
             break
 
         if (press[pygame.K_u]):
-            print(scale)
-            if (t := scale+2) in range(5, 100):
+            if (t := params["scale"]+2) in range(5, 100):
                 init_scale(t)
+                screen_size = (params["screen_size_x"], params["screen_size_y"])
                 screen = pygame.display.set_mode(screen_size)
                 make_maze()
     
         if (press[pygame.K_d]):
-            print(scale)
-            if (t := scale-2) in range(5, 100):
+            if (t := params["scale"]-2) in range(5, 100):
                 init_scale(t)
+                screen_size = (params["screen_size_x"], params["screen_size_y"])
                 screen = pygame.display.set_mode(screen_size)
                 make_maze()
 
         if (press[pygame.K_m]):
             make_maze()
 
-        if (press[pygame.K_LEFT] and is_not_collision(x - TILE_SIZE[0], y)):
-            x -= TILE_SIZE[0]
+        if (press[pygame.K_LEFT] and is_not_collision(x - params["tile_size_x"], y)):
+            x -= params["tile_size_x"]
 
-        if (press[pygame.K_RIGHT] and is_not_collision(x + TILE_SIZE[1], y)):
-            x += TILE_SIZE[0]
+        if (press[pygame.K_RIGHT] and is_not_collision(x + params["tile_size_y"], y)):
+            x += params["tile_size_x"]
         
-        if (press[pygame.K_UP] and is_not_collision(x, y - TILE_SIZE[1])):
-            y -= TILE_SIZE[1]
+        if (press[pygame.K_UP] and is_not_collision(x, y - params["tile_size_y"])):
+            y -= params["tile_size_y"]
 
-        if (press[pygame.K_DOWN] and is_not_collision(x, y + TILE_SIZE[1])):
-            y += TILE_SIZE[1]
+        if (press[pygame.K_DOWN] and is_not_collision(x, y + params["tile_size_y"])):
+            y += params["tile_size_y"]
 
         # print(f"[FPS] {}")
         # wall
-        for j in range(TILE[1]):
-            for i in range(TILE[0]):
+        for j in range(params["tile_y"]):
+            for i in range(params["tile_x"]):
                 if maze[j][i] == ObjAttr.WALL:
-                    wall = pygame.Rect(i * TILE_SIZE[0], j * TILE_SIZE[1],
-                        TILE_SIZE[0], TILE_SIZE[1])
+                    wall = pygame.Rect(i * params["tile_size_x"], j * params["tile_size_y"],
+                        params["tile_size_x"], params["tile_size_y"])
                     pygame.draw.rect(screen, WALL_COLOR, wall)
                 elif maze[j][i] == ObjAttr.AISLE:
-                    aisle = pygame.Rect(i * TILE_SIZE[0], j * TILE_SIZE[1],
-                        TILE_SIZE[0], TILE_SIZE[1])
+                    aisle = pygame.Rect(i * params["tile_size_x"], j * params["tile_size_y"],
+                        params["tile_size_x"], params["tile_size_y"])
                     pygame.draw.rect(screen, AISLE_COLOR, aisle)
                 elif maze[j][i] == ObjAttr.GOAL:
-                    goal = pygame.Rect(i * TILE_SIZE[0], j * TILE_SIZE[1],
-                        TILE_SIZE[0], TILE_SIZE[1])
+                    goal = pygame.Rect(i * params["tile_size_x"], j * params["tile_size_y"],
+                        params["tile_size_x"], params["tile_size_y"])
                     pygame.draw.rect(screen, GOAL_COLOR, goal)
 
-        me = pygame.Rect(x, y, TILE_SIZE[0], TILE_SIZE[1])
+        me = pygame.Rect(x, y, params["tile_size_x"], params["tile_size_y"])
         pygame.draw.rect(screen, ME_COLOR, me)
         pygame.display.flip()
         clock.tick(16)
@@ -353,12 +361,36 @@ def run():
 
     pygame.quit()
 
+
+# scale = 5
+# TILE_SIZE = (30, 30)
+# screen_size = (params["tile_size_x"]*scale, params["tile_size_x"]*scale)
+# TILE = (screen_size[0]//params["tile_size_x"], screen_size[1]//params["tile_size_y"])
+# maze = []
+
+# x = params["tile_size_x"]
+# y = params["tile_size_y"]
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--loop", type=int, default=-1, help="loop")
-    parser.add_argument("-r", "--rom", default="", help="rom")
+    parser.add_argument("-alg", "--algorithm", default="wall_extend", help="")
+    parser.add_argument("-l", "--loop", type=int, default=-1, help="")
+    parser.add_argument("-s", "--scale", type=int, default=5, help="")
+    parser.add_argument("-tx", "--tile_size_x", type=int, default=30, help="")
+    parser.add_argument("-ty", "--tile_size_y", type=int, default=30, help="")
     args = parser.parse_args()
-    # print(vars(args), tag="args", tag_color="green", color="white")
     print(vars(args))
+
+    params["args"] = args
+    params["scale"] = args.scale
+    params["tile_size_x"] = args.tile_size_x
+    params["tile_size_y"] = args.tile_size_y
+    params["screen_size_x"] = params["tile_size_x"] * params["scale"]
+    params["screen_size_y"] = params["tile_size_y"] * params["scale"]
+    params["tile_x"] = params["screen_size_x"] // args.tile_size_x
+    params["tile_y"] = params["screen_size_y"] // args.tile_size_y
+    params["algorithm"] = args.algorithm
+    params["maze"] = []
 
     run()
