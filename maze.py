@@ -31,7 +31,18 @@ AISLE_COLOR = WHITE
 WALL_COLOR = BLACK
 GOAL_COLOR = ORANGE
 
-params = {'algorithm': 'wall_extend', 'loop': -1, 'scale': 5, 'tile_size_x': 30, 'tile_size_y': 30}
+params = {
+    'algorithm': 'wall_extend',
+    'loop': -1,
+    'scale': 5,
+    'tile_size_x': 30,
+    'tile_size_y': 30,
+    'screen_size_x': 150,
+    'screen_size_y': 150,
+    'tile_x': 5,
+    'tile_y': 5,
+    'maze': []
+}
 
 def init_scale(scale):
     params["scale"] = scale
@@ -425,7 +436,6 @@ if __name__ == '__main__':
     parser.add_argument("-tx", "--tile_size_x", type=int, default=30, help="")
     parser.add_argument("-ty", "--tile_size_y", type=int, default=30, help="")
     args = parser.parse_args()
-    print(vars(args))
 
     params["args"] = args
     params["scale"] = args.scale
@@ -437,6 +447,7 @@ if __name__ == '__main__':
     params["tile_y"] = params["screen_size_y"] // args.tile_size_y
     params["algorithm"] = args.algorithm
     params["maze"] = []
+    print(params)
 
     # run()
     maze = get_maze("wall_extend", 9, 9)

@@ -14,7 +14,7 @@ obj_info = {
     "water" : {"tile_x": 1, "tile_y": 6, "colkey": None, "col": 1, "attr": "obst"},
     "aisle" : {"tile_x": 0, "tile_y": 5, "colkey": None, "col": 0, "attr": "obst"},
     "grass" : {"tile_x": 1, "tile_y": 5, "colkey": None, "col": 0, "attr": "obst"},
-    "wood" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 1, "attr": "obst"},
+    "tree" : {"tile_x": 2, "tile_y": 5, "colkey": None, "col": 1, "attr": "obst"},
     "status_corner" : {"tile_x": 3, "tile_y": 5, "colkey": 1, "col": 1, "attr": "obst"},
     "status_ver_edge" : {"tile_x": 3, "tile_y": 6, "colkey": 1, "col": 1, "attr": "obst"},
     "status_hori_edge" : {"tile_x": 4, "tile_y": 5, "colkey": 1, "col": 1, "attr": "obst"},
@@ -234,6 +234,26 @@ class Game:
                     print(f"tile not found, {i} {j}")
                     raise RuntimeError
         params["map"] = self.map
+
+        self.maze_map = maze.get_maze("bar_down", self.map_size_x, self.map_size_y)
+        print(len(self.maze_map), len(self.maze_map[0]))
+        # maze_map = [[0 for i in range(self.map_size_x)] for j in range(self.map_size_y)]
+        for i in range(self.map_size_x):
+            for j in range(self.map_size_y):
+                print(i, j, self.maze_map[j][i])
+                obj_attr = self.maze_map[j][i]
+                if obj_attr == maze.ObjAttr.AISLE:
+                    self.maze_map[j][i] = obj_info["grass"]
+                elif obj_attr == maze.ObjAttr.WALL:
+                    self.maze_map[j][i] = obj_info["tree"]
+                elif obj_attr == maze.ObjAttr.GOAL:
+                    self.maze_map[j][i] = obj_info["wall"]
+                else:
+                    print(f"invalid attr, {i} {j}")
+                    raise RuntimeError
+        params["maze_map"] = self.maze_map
+        params["map"] = self.maze_map
+        # params["map"] = self.map
 
     def set_random_position(self):
         self.x, self.y = get_random_position()
@@ -476,8 +496,7 @@ if __name__ == '__main__':
 
     pprint.pprint(params)
     Game()
-
-    maze_map = maze.get_maze("wall_extend", 9, 9)
+    maze_map = maze.get_maze("wall_extend", args.map_width, args.map_height)
     print("get_maze")
-    for j in range(9):
+    for j in range(args.map_height):
         print([1 if s == maze.ObjAttr.WALL else 0 for s in maze_map[j]])
