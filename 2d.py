@@ -5,6 +5,7 @@ import pprint
 import random
 import sys
 import uuid
+import maze
 
 obj_info = {
     # obj
@@ -475,3 +476,8 @@ if __name__ == '__main__':
 
     pprint.pprint(params)
     Game()
+
+    maze_map = maze.get_maze("wall_extend", 9, 9)
+    print("get_maze")
+    for j in range(9):
+        print([1 if s == maze.ObjAttr.WALL else 0 for s in maze_map[j]])

@@ -31,7 +31,7 @@ AISLE_COLOR = WHITE
 WALL_COLOR = BLACK
 GOAL_COLOR = ORANGE
 
-params = {}
+params = {'algorithm': 'wall_extend', 'loop': -1, 'scale': 5, 'tile_size_x': 30, 'tile_size_y': 30}
 
 def init_scale(scale):
     params["scale"] = scale
@@ -144,10 +144,9 @@ class Pos:
 
             self.movable.pop(index)
             if len(self.movable) == 0:
-                print(self.x, self.y)
                 print(f"no movable, retry... {self.x}, {self.y}")
                 self.movable_init()
-                if retry > 5:
+                if retry > 10:
                     print("too many retry")
                     raise Exception
                 retry += 1
@@ -440,7 +439,7 @@ if __name__ == '__main__':
     params["maze"] = []
 
     # run()
-    maze = get_maze("wall_extend", 10, 10)
+    maze = get_maze("wall_extend", 9, 9)
     print("get_maze")
-    for j in range(10):
+    for j in range(9):
         print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
