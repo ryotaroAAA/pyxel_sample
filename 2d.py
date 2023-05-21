@@ -59,6 +59,9 @@ class Obj:
         self.attr = []
         self.x = obj_info.get("x", x)
         self.y = obj_info.get("y", y)
+        self.to_x = obj_info.get("x", x)
+        self.to_y = obj_info.get("y", y)
+        self.move_bit = 0
         self.tile_x = obj_info.get("tile_x", tile_x)
         self.tile_y = obj_info.get("tile_y", tile_y)
         self.colkey = obj_info.get("colkey", colkey)
@@ -81,14 +84,14 @@ class Obj:
         # game_map = args.
         if type(x) == type(y) == int:
             if x > 0 and y > 0 and is_collision(x, y):
-                self.x = x
-                self.y = y
+                self.x = self.to_x = x
+                self.y = self.to_y = y
                 self.register()
                 self.hide = False
         if x == y == None:
             x, y = get_random_position()
-            self.x = x
-            self.y = y
+            self.x = self.to_x = x
+            self.y = self.to_y = y
             self.register()
             self.hide = False
         return self
@@ -110,7 +113,6 @@ class Character(Obj):
         self.agility = obj.get("agility", agility)
         self.gold = obj.get("gold", gold)
         self.exp = obj.get("exp", exp)
-
 class Enemy(Character):
     def __init__(self, name, level=1, hp=5, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
         super().__init__(name, level, hp, mp, attack, defence, agility, gold, exp)
@@ -201,8 +203,8 @@ class Game:
         # self.set_random_position()
 
         self.player = Player("reimu").spawn()
-        self.x = self.player.x
-        self.y = self.player.y
+        self.x = self.player.x*self.bit_x
+        self.y = self.player.y*self.bit_x
         
         for k, tile in obj_info.items():
             if tile["attr"] == "obst":
@@ -234,18 +236,19 @@ class Game:
                     print(f"tile not found, {i} {j}")
                     raise RuntimeError
         params["map"] = self.map
+        return
 
         self.maze_map = maze.get_maze("bar_down", self.map_size_x, self.map_size_y)
         print(len(self.maze_map), len(self.maze_map[0]))
         # maze_map = [[0 for i in range(self.map_size_x)] for j in range(self.map_size_y)]
         for i in range(self.map_size_x):
             for j in range(self.map_size_y):
-                print(i, j, self.maze_map[j][i])
+                # print(i, j, self.maze_map[j][i])
                 obj_attr = self.maze_map[j][i]
                 if obj_attr == maze.ObjAttr.AISLE:
-                    self.maze_map[j][i] = obj_info["grass"]
+                    self.maze_map[j][i] = obj_info["aisle"]
                 elif obj_attr == maze.ObjAttr.WALL:
-                    self.maze_map[j][i] = obj_info["tree"]
+                    self.maze_map[j][i] = obj_info["wall"]
                 elif obj_attr == maze.ObjAttr.GOAL:
                     self.maze_map[j][i] = obj_info["wall"]
                 else:
@@ -256,7 +259,8 @@ class Game:
         # params["map"] = self.map
 
     def set_random_position(self):
-        self.x, self.y = get_random_position()
+        x, y = get_random_position()
+        self.x, self.y = x*self.bit_x, y*self.bit_y
 
     def draw_tile(self, x, y, tile, inv_x=False, inv_y=False):
         """
@@ -267,14 +271,63 @@ class Game:
         tile_y = tile["tile_y"]
         colkey = tile["colkey"]
         # print(x, y, tile, tile_x, tile_y, pyxel.tilemap(0).pget(tile_x, tile_y))
-        pyxel.blt(x*self.bit_x,
-            y*self.bit_y,
+        pyxel.blt(x,
+            y,
             0,
             tile_x*self.bit_x,
             tile_y*self.bit_y,
             self.bit_x*(-1 if inv_x else 1),
             self.bit_y*(-1 if inv_y else 1),
             colkey)
+    
+    def move_tile(self, obj, tile,
+                    inv_x=False, inv_y=False):
+        """
+        x, y: 描画位置
+        tile: image bank上の位置、透明色
+        """
+        tile_x = tile["tile_x"]
+        tile_y = tile["tile_y"]
+        colkey = tile["colkey"]
+        to_x = obj.to_x
+        to_y = obj.to_y
+        x = obj.x
+        y = obj.y
+        
+        if to_x - x and to_y - y:
+            self.player.x = self.player.to_x
+            self.player.y = self.player.to_y
+            return
+        if obj.move_bit < 8:
+            pyxel.blt(x*self.bit_x + (to_x - x)*obj.move_bit,
+                y*self.bit_y + (to_y - y)*obj.move_bit,
+                0,
+                tile_x*self.bit_x,
+                tile_y*self.bit_y,
+                self.bit_x*(-1 if inv_x else 1),
+                self.bit_y*(-1 if inv_y else 1),
+                colkey)
+            obj.move_bit += 1
+            if "player" in obj.attr:
+                self.x = obj.x*self.bit_x + (to_x - x)*obj.move_bit
+                self.y = obj.y*self.bit_y + (to_y - y)*obj.move_bit
+        else:
+            obj.x = obj.to_x
+            obj.y = obj.to_y
+            obj.move_bit = 0
+            if "player" in obj.attr:
+                self.player.x = obj.x
+                self.player.y = obj.y
+                self.x = obj.x*self.bit_x
+                self.y = obj.y*self.bit_y
+            pyxel.blt(self.x,
+                self.y,
+                0,
+                tile_x*self.bit_x,
+                tile_y*self.bit_y,
+                self.bit_x*(-1 if inv_x else 1),
+                self.bit_y*(-1 if inv_y else 1),
+                colkey)
 
     def game_over(self):
         self.is_game_over = True
@@ -319,9 +372,11 @@ class Game:
                 raise RuntimeError
 
     def update_direction(self):
-        if pyxel.frame_count % 2 == 0:
-            x = self.x
-            y = self.y
+        if pyxel.frame_count % 5 == 0:
+            if self.player.move_bit > 0:
+                return
+            x = self.x//self.bit_x
+            y = self.y//self.bit_x
             mod = False
             if pyxel.btn(pyxel.KEY_UP):
                 y = y - 1
@@ -335,6 +390,9 @@ class Game:
             if pyxel.btn(pyxel.KEY_RIGHT):
                 x = x + 1
                 mod = True
+            if not mod:
+                return
+            
             # enemy/item なら消す
             col_obj = None
             for id, obj in params["obj"].items():
@@ -357,15 +415,13 @@ class Game:
                         self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
                     col_obj.kill()
             if mod and not is_collision(x, y):
-                self.x = x
-                self.y = y
-            self.player.x = self.x
-            self.player.y = self.y
+                self.player.to_x = x
+                self.player.to_y = y
 
     # 毎フレームオンメモリ情報を書き換える
     def update(self):
         if self.is_game_over:
-            if pyxel.frame_count % 2 == 0:
+            if pyxel.frame_count % 5 == 0:
                 if pyxel.btn(pyxel.KEY_R):
                     self.set_random_position()
                     self.player.hp = self.player.max_hp
@@ -373,7 +429,7 @@ class Game:
                     self.is_game_over = False
             return
         self.update_direction()
-        if pyxel.frame_count % 2 == 0:
+        if pyxel.frame_count % 5 == 0:
             if pyxel.btn(pyxel.KEY_S):
                 sample = random.choice(list(enemys.keys()))
                 Enemy(sample).spawn()
@@ -402,21 +458,22 @@ class Game:
             if obj.hide:
                 continue
             # print(obj.x, obj.y, obj.name)
-            self.draw_tile(obj.x, obj.y, obj_info[obj.name])
+            if obj.to_x == obj.x and obj.to_y == obj.y:
+                self.draw_tile(obj.x*self.bit_x, obj.y*self.bit_x, obj_info[obj.name])
+            else:
+                self.move_tile(obj, obj_info[obj.name])
     
     def get_camera_corner(self):
-        opt_x = max(self.x - self.tile_x//2, 0)
-        opt_x = min(opt_x, self.map_size_x - self.tile_x)
-        opt_y = max(self.y - self.tile_y//2, 0)
-        opt_y = min(opt_y, self.map_size_y - self.tile_y)
+        opt_x = max(self.x - self.tile_x*self.bit_x//2, 0)
+        opt_x = min(opt_x, self.map_size_x*self.bit_x - self.tile_x*self.bit_x)
+        opt_y = max(self.y - self.tile_y*self.bit_y//2, 0)
+        opt_y = min(opt_y, self.map_size_y*self.bit_y - self.tile_y*self.bit_y)
         return opt_x, opt_y
 
-    def draw_status(self, bar_x=0, bar_y=0):
+    def draw_status(self, opt_x, opt_y, bar_x=0, bar_y=0):
         if self.status_hide:
             return
 
-        # カメラに追従させる
-        opt_x, opt_y = self.get_camera_corner()
         for i in range(bar_x):
             for j in range(bar_y):
                 if i in [0, bar_x - 1] or j in [0, bar_y - 1]:
@@ -427,19 +484,21 @@ class Game:
                         tile_type = obj_info["status_ver_edge"]
                     if i in [0, bar_x - 1] and j in [0, bar_y - 1]:
                         tile_type = obj_info["status_corner"]
-                    self.draw_tile(opt_x + i,
-                                opt_y + j,
+                    # print(opt_x + i*self.bit_x, opt_y + j*self.bit_y)
+                    
+                    self.draw_tile(opt_x + i*self.bit_x,
+                                opt_y + j*self.bit_y,
                                 tile_type,
                                 inv_x=inv_x,
                                 inv_y=inv_y)
                 else:
-                    self.draw_tile(opt_x + i,
-                        opt_y + j,
+                    self.draw_tile(opt_x + i*self.bit_x,
+                        opt_y + j*self.bit_y,
                         obj_info["black"])
 
         def draw_text(line, text):
-            pyxel.text(opt_x*self.bit_x + 5,
-                        opt_y*self.bit_y + 5 + 6*line, 
+            pyxel.text(opt_x + 5,
+                        opt_y + 5 + 6*line, 
                         text,
                         7)
         if self.is_game_over:
@@ -471,15 +530,15 @@ class Game:
         
         # draw background
         opt_x, opt_y = self.get_camera_corner()
-        pyxel.camera(opt_x*self.bit_x, opt_y*self.bit_y)
+        pyxel.camera(opt_x, opt_y)
         
         for i in range(self.map_size_x):
             for j in range(self.map_size_y):
-                self.draw_tile(i, j, self.map[j][i])
+                self.draw_tile(i*self.bit_x, j*self.bit_y, params["map"][j][i])
         
         # draw sprites
         self.draw_sprites()
-        self.draw_status(bar_x=6, bar_y=7)
+        self.draw_status(opt_x, opt_y, bar_x=6, bar_y=7)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -489,14 +548,15 @@ if __name__ == '__main__':
     parser.add_argument("-mw", "--map_width", type=int, default=40, help="")
     parser.add_argument("-th", "--visible_tile_height", type=int, default=16, help="")
     parser.add_argument("-tw", "--visible_tile_width", type=int, default=16, help="")
-    parser.add_argument("-fps", "--fps", type=int, default=30, help="")
+    parser.add_argument("-fps", "--fps", type=int, default=60, help="")
     parser.add_argument("-s", "--stop", action="store_true", help="")
     args = parser.parse_args()
     params = vars(args)
 
     pprint.pprint(params)
     Game()
-    maze_map = maze.get_maze("wall_extend", args.map_width, args.map_height)
-    print("get_maze")
-    for j in range(args.map_height):
-        print([1 if s == maze.ObjAttr.WALL else 0 for s in maze_map[j]])
+
+    # maze_map = maze.get_maze("wall_extend", args.map_width, args.map_height)
+    # print("get_maze")
+    # for j in range(args.map_height):
+    #     print([1 if s == maze.ObjAttr.WALL else 0 for s in maze_map[j]])
