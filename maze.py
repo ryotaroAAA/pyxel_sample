@@ -35,16 +35,19 @@ params = {}
 
 def init_scale(scale):
     params["scale"] = scale
-
+    # tile_size : pixel size
+    # tile : how many tiles in screen
     params["screen_size_x"] = params["tile_size_x"] * params["scale"]
     params["screen_size_y"] = params["tile_size_y"] * params["scale"]
     params["tile_x"] = params["screen_size_x"] // args.tile_size_x
     params["tile_y"] = params["screen_size_y"] // args.tile_size_y
 
 class Pos:
-    def __init__(self, pos, maze):
+    def __init__(self, pos, maze, tile_x=None, tile_y=None):
         self.x = pos[0]
         self.y = pos[1]
+        self.tile_x = params["tile_x"] if tile_x == None else tile_x
+        self.tile_y = params["tile_y"] if tile_y == None else tile_y
         self.movable_init()
         self.maze = maze
         self.stack = []
@@ -56,8 +59,8 @@ class Pos:
         ]
 
     def is_collision(self, x, y):
-        maze = params["maze"]
-        if 0 <= x < params["tile_x"] and 0 <= y < params["tile_y"]:
+        maze = self.maze
+        if 0 <= x < self.tile_x and 0 <= y < self.tile_y:
             if maze[y][x] in [ObjAttr.WALL]:
                 return True
             else:
@@ -65,8 +68,8 @@ class Pos:
         return True
 
     def detect_obj(self, x, y):
-        maze = params["maze"]
-        if 0 <= x < params["tile_x"] and 0 <= y < params["tile_y"]:
+        maze = self.maze
+        if 0 <= x < self.tile_x and 0 <= y < self.tile_y:
             return maze[y][x]
         else:
             return False
@@ -91,7 +94,7 @@ class Pos:
 
     def chack_2step_forward(self, dire):
         x, y = self.get_move_pos(dire, 2)
-        if (x in range(params["tile_x"]) and y in range(params["tile_x"]) and
+        if (x in range(self.tile_x) and y in range(self.tile_y) and
                 not (x, y) in self.stack):
             return self.maze[y][x]
         else:
@@ -123,6 +126,7 @@ class Pos:
         return index, dire
 
     def wall_extend(self):
+        retry = 0
         while len(self.movable)>0:
             # random choise one direction
             index, one_dire = self.get_random_direct()
@@ -140,14 +144,18 @@ class Pos:
 
             self.movable.pop(index)
             if len(self.movable) == 0:
-                print("no movable, retry")
+                print(self.x, self.y)
+                print(f"no movable, retry... {self.x}, {self.y}")
                 self.movable_init()
-                break
+                if retry > 5:
+                    print("too many retry")
+                    raise Exception
+                retry += 1
         
         return False
 
     def bar_down(self):
-        maze = params["maze"]
+        maze = self.maze
         a, b = self.x, self.y
         self.movable_init()
         if not self.y == 2:
@@ -165,14 +173,16 @@ class Pos:
 def is_eq_objattr(maze, pos, attr):
     return maze[pos[1]][pos[0]] == attr
 
-def wall_extend():
-    maze = []
-    for j in range(params["tile_y"]):
+def wall_extend(maze=None, x=None, y=None):
+    maze = [] if maze == None else maze
+    tile_x = params["tile_x"] if x == None else x
+    tile_y = params["tile_y"] if y == None else y
+    for j in range(tile_y):
         row = []
-        for i in range(params["tile_x"]):
+        for i in range(tile_x):
             # outer wall
             if (i == 0 or j == 0 or
-                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
+                    i == tile_x-1 or j == tile_y-1):
                 row.append(ObjAttr.WALL)
             else:
                 row.append(ObjAttr.AISLE)
@@ -182,16 +192,18 @@ def wall_extend():
 
     print("[wall_extend]")
     
-    for j in range(params["tile_y"]):
+    for j in range(tile_y):
         print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
     
     is_wall_cand = (lambda i, j: 
-                    i in range(1, params["tile_x"]-1) and
-                    j in range(1, params["tile_y"]-1) and
+                    i in range(1, tile_x-1) and
+                    j in range(1, tile_y-1) and
                     i%2 == 0 and j%2 == 0)
-    cand = [(i, j) for i in range(params["tile_x"])
-        for j in range(params["tile_y"]) if is_wall_cand(i, j)]
+    cand = [(i, j) for i in range(tile_x)
+        for j in range(tile_y) if is_wall_cand(i, j)]
+    retry = 0
     while len(cand) > 0:
+        print(len(cand), cand)
         # decide start position
         index_cand = random.randint(0, len(cand) - 1)
         rand_cand = cand[index_cand]
@@ -199,22 +211,32 @@ def wall_extend():
             cand.pop(index_cand)
             continue
         # decide where to extend wall
-        pos = Pos(rand_cand, maze)
+        print("cand:", rand_cand)
+        pos = Pos(rand_cand, maze, tile_x, tile_y)
         pos.wall_extend()
 
-    for j in range(params["tile_y"]):
+        retry += 1
+        if retry > 10:
+            for j in range(tile_y):
+                print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
+            print(f"too many... {retry}")
+            raise Exception
+
+    for j in range(tile_y):
         print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
     
     params["maze"] = maze
 
-def bar_down():
-    maze = []
-    for j in range(params["tile_y"]):
+def bar_down(maze=None, x=None, y=None):
+    maze = [] if maze == None else maze
+    tile_x = params["tile_x"] if x == None else x
+    tile_y = params["tile_y"] if y == None else y
+    for j in range(tile_y):
         row = []
-        for i in range(params["tile_x"]):
+        for i in range(tile_x):
             # outer wall
             if (i == 0 or j == 0 or
-                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
+                    i == tile_x-1 or j == tile_y-1):
                 row.append(ObjAttr.WALL)
             elif (i%2 == 0 and j%2 == 0):
                 row.append(ObjAttr.WALL)
@@ -225,10 +247,10 @@ def bar_down():
         maze.append(row)
 
     print("[bar_down]")
-    for j in range(params["tile_y"]):
-        for i in range(params["tile_x"]):
+    for j in range(tile_y):
+        for i in range(tile_x):
             if (i == 0 or j == 0 or
-                    i == params["tile_x"]-1 or j == params["tile_y"]-1):
+                    i == tile_x-1 or j == tile_y-1):
                 # nothing to do
                 pass
             elif (i%2 == 0 and j%2 == 0):
@@ -237,7 +259,7 @@ def bar_down():
             else:
                 continue
     
-    for j in range(params["tile_y"]):
+    for j in range(tile_y):
         print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
 
     params["maze"] = maze
@@ -258,8 +280,7 @@ def make_maze():
     y = params["tile_size_y"]
 
     maze = params["maze"]
-    print("test", maze)
-    print(params)
+    # print(params)
     while True:
         i = random.randint(0, params["tile_x"]-1)
         j = random.randint(0, params["tile_y"]-1)
@@ -268,6 +289,28 @@ def make_maze():
             maze[j][i] = ObjAttr.GOAL
             # print(f"goal:({i}, {j}), cur:({x//params["tile_size_x"]}, {y//params["tile_size_y"]})")
             break
+
+def get_maze(algorithm, tiles_x, tiles_y):
+    maze = []
+    if algorithm == "bar_down":
+        bar_down(maze, tiles_x, tiles_y)
+    elif algorithm == "wall_extend":
+        wall_extend(maze, tiles_x, tiles_y)
+    else:
+        print("unknown algorithm")
+        raise
+
+    x = params["tile_size_x"]
+    y = params["tile_size_y"]
+
+    # print(params)
+    while True:
+        i = random.randint(0, tiles_x - 1)
+        j = random.randint(0, tiles_y - 1)
+        if maze[j][i] == ObjAttr.AISLE:
+            maze[j][i] = ObjAttr.GOAL
+            break
+    return maze
 
 def is_not_collision(x, y):
     maze = params["maze"]
@@ -309,6 +352,7 @@ def run():
                 screen_size = (params["screen_size_x"], params["screen_size_y"])
                 screen = pygame.display.set_mode(screen_size)
                 make_maze()
+                maze = params["maze"]
     
         if (press[pygame.K_d]):
             if (t := params["scale"]-2) in range(5, 100):
@@ -316,9 +360,11 @@ def run():
                 screen_size = (params["screen_size_x"], params["screen_size_y"])
                 screen = pygame.display.set_mode(screen_size)
                 make_maze()
+                maze = params["maze"]
 
         if (press[pygame.K_m]):
             make_maze()
+            maze = params["maze"]
 
         if (press[pygame.K_LEFT] and is_not_collision(x - params["tile_size_x"], y)):
             x -= params["tile_size_x"]
@@ -336,6 +382,7 @@ def run():
         # wall
         for j in range(params["tile_y"]):
             for i in range(params["tile_x"]):
+                # print(i,j)
                 if maze[j][i] == ObjAttr.WALL:
                     wall = pygame.Rect(i * params["tile_size_x"], j * params["tile_size_y"],
                         params["tile_size_x"], params["tile_size_y"])
@@ -371,7 +418,6 @@ def run():
 # x = params["tile_size_x"]
 # y = params["tile_size_y"]
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-alg", "--algorithm", default="wall_extend", help="")
@@ -393,4 +439,8 @@ if __name__ == '__main__':
     params["algorithm"] = args.algorithm
     params["maze"] = []
 
-    run()
+    # run()
+    maze = get_maze("wall_extend", 10, 10)
+    print("get_maze")
+    for j in range(10):
+        print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
