@@ -117,6 +117,16 @@ class Enemy(Character):
     def __init__(self, name, level=1, hp=5, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
         super().__init__(name, level, hp, mp, attack, defence, agility, gold, exp)
         self.attr.append("enemy")
+    
+    def rand_move(self):
+        rand_to = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
+        if is_collision(self.x + rand_to[0], self.y + rand_to[1]):
+            return
+        if not self.to_x == self.x or not self.to_y == self.y:
+            return
+        self.to_x = self.x + rand_to[0]
+        self.to_y = self.y + rand_to[1]
+        print(f"move: ({self.x}, {self.y}) => ({self.to_x}, {self.to_y})")
 
 class Player(Character):
     def __init__(self, name, level=1, hp=10, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
@@ -134,6 +144,15 @@ class Player(Character):
         self.agility += random.randint(0,2)
         self.hp = self.max_hp
         self.mp = self.max_mp
+        self.check()
+    
+    def check(self):
+        self.level = min(99, self.level)
+        self.max_hp = min(999, self.max_hp)
+        self.max_mp = min(999, self.max_mp)
+        self.attack = min(99, self.attack)
+        self.defence = min(99, self.defence)
+        self.agility = min(99, self.agility)
 
 class Item(Obj):
     def __init__(self, name, heal=1, desc=None):
@@ -295,8 +314,9 @@ class Game:
         y = obj.y
         
         if to_x - x and to_y - y:
-            self.player.x = self.player.to_x
-            self.player.y = self.player.to_y
+            if "player" in obj.attr:
+                self.player.x = self.player.to_x
+                self.player.y = self.player.to_y
             return
         if obj.move_bit < 8:
             pyxel.blt(x*self.bit_x + (to_x - x)*obj.move_bit,
@@ -320,8 +340,8 @@ class Game:
                 self.player.y = obj.y
                 self.x = obj.x*self.bit_x
                 self.y = obj.y*self.bit_y
-            pyxel.blt(self.x,
-                self.y,
+            pyxel.blt(obj.x*self.bit_x,
+                obj.y*self.bit_y,
                 0,
                 tile_x*self.bit_x,
                 tile_y*self.bit_y,
@@ -370,6 +390,35 @@ class Game:
             if ((turn := turn + 1) > 100):
                 print("too many turn")
                 raise RuntimeError
+    
+    def check_collision(self, me, to_x, to_y): 
+        col_obj = None
+        for id, obj in params["obj"].items():
+            if to_x == obj.x and to_y == obj.y:
+                # print(vars(obj))
+                col_obj = obj
+                break
+        if not col_obj == None: 
+            if "enemy" in col_obj.attr:
+                self.battle(col_obj)
+            elif "weapon" in col_obj.attr:
+                # pprint.pprint(vars(col_obj))
+                self.player.attack += col_obj.attack
+                self.player.defence += col_obj.defence
+                self.player.check()
+                col_obj.kill()
+            elif "item" in col_obj.attr:
+                if col_obj.name == "treasure":
+                    self.add_exp(random.randint(1, 114514))
+                else:
+                    self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
+                col_obj.kill()
+        if self.is_moved(me, to_x, to_y) and not is_collision(to_x, to_y):
+            me.to_x = to_x
+            me.to_y = to_y
+    
+    def is_moved(self, obj, to_x, to_y):
+        return (obj.x - to_x) or (obj.y - to_y)
 
     def update_direction(self):
         if pyxel.frame_count % 5 == 0:
@@ -377,46 +426,19 @@ class Game:
                 return
             x = self.x//self.bit_x
             y = self.y//self.bit_x
-            mod = False
             if pyxel.btn(pyxel.KEY_UP):
                 y = y - 1
-                mod = True
             if pyxel.btn(pyxel.KEY_DOWN):
                 y = y + 1
-                mod = True
             if pyxel.btn(pyxel.KEY_LEFT):
                 x = x - 1
-                mod = True
             if pyxel.btn(pyxel.KEY_RIGHT):
                 x = x + 1
-                mod = True
-            if not mod:
+            if not self.is_moved(self.player, x, y):
                 return
             
-            # enemy/item なら消す
-            col_obj = None
-            for id, obj in params["obj"].items():
-                if x == obj.x and y == obj.y:
-                    # print(vars(obj))
-                    col_obj = obj
-                    break
-            if not col_obj == None: 
-                if "enemy" in col_obj.attr:
-                    self.battle(col_obj)
-                elif "weapon" in col_obj.attr:
-                    # pprint.pprint(vars(col_obj))
-                    self.player.attack += col_obj.attack
-                    self.player.defence += col_obj.defence
-                    col_obj.kill()
-                elif "item" in col_obj.attr:
-                    if col_obj.name == "treasure":
-                        self.add_exp(random.randint(1, 114514))
-                    else:
-                        self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
-                    col_obj.kill()
-            if mod and not is_collision(x, y):
-                self.player.to_x = x
-                self.player.to_y = y
+            self.check_collision(self.player, x, y)
+
 
     # 毎フレームオンメモリ情報を書き換える
     def update(self):
@@ -450,6 +472,13 @@ class Game:
                     self.status_hide = False
                 else:
                     self.status_hide = True
+        
+        if pyxel.frame_count % 60 == 0:
+            # self.check_collision(self.player, x, y)
+            for id, obj in params["obj"].items():
+                if "enemy" in obj.attr:
+                    # pprint.pprint(vars(obj))
+                    obj.rand_move()
 
     def draw_sprites(self):
         objects = params["obj"]
@@ -457,7 +486,8 @@ class Game:
         for id, obj in objects.items():
             if obj.hide:
                 continue
-            # print(obj.x, obj.y, obj.name)
+            # if not "player" in obj.attr:
+            #     print(f"{obj.name} : ({obj.x}, {obj.y}) -> ({obj.to_x}, {obj.to_y})")
             if obj.to_x == obj.x and obj.to_y == obj.y:
                 self.draw_tile(obj.x*self.bit_x, obj.y*self.bit_x, obj_info[obj.name])
             else:
