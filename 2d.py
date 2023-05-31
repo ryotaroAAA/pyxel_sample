@@ -66,6 +66,8 @@ class Obj:
         self.tile_y = obj_info.get("tile_y", tile_y)
         self.colkey = obj_info.get("colkey", colkey)
         self.col = obj_info.get("col", col)
+        self.damaged_frame = sys.maxsize
+        self.flash = False
         self.hide = True
         # self.register()
         print(name)
@@ -113,20 +115,11 @@ class Character(Obj):
         self.agility = obj.get("agility", agility)
         self.gold = obj.get("gold", gold)
         self.exp = obj.get("exp", exp)
+
 class Enemy(Character):
     def __init__(self, name, level=1, hp=5, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
         super().__init__(name, level, hp, mp, attack, defence, agility, gold, exp)
         self.attr.append("enemy")
-    
-    def rand_move(self):
-        rand_to = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
-        if is_collision(self.x + rand_to[0], self.y + rand_to[1]):
-            return
-        if not self.to_x == self.x or not self.to_y == self.y:
-            return
-        self.to_x = self.x + rand_to[0]
-        self.to_y = self.y + rand_to[1]
-        print(f"move: ({self.x}, {self.y}) => ({self.to_x}, {self.to_y})")
 
 class Player(Character):
     def __init__(self, name, level=1, hp=10, mp=10, attack=1, defence=1, agility=1, gold=1, exp=1):
@@ -362,15 +355,17 @@ class Game:
                 exp -= player.next_level_exp
                 player.next_level_exp = 10
                 player.level_up()
-        
+
     def battle(self, enemy):
         player = self.player
         first, second = (player, enemy) if player.agility > enemy.agility else (enemy, player)
         turn = 0
-        while(True):
+        # while(True):
+        for _ in range(1):
             def one_turn(atk_side, def_side):
                 battle_end = False
                 def_side.hp -= max((atk_side.attack - def_side.defence), 1)
+                def_side.damaged_frame = pyxel.frame_count
                 if def_side.hp <= 0:
                     if def_side == player:
                         self.game_over()
@@ -398,21 +393,25 @@ class Game:
                 # print(vars(obj))
                 col_obj = obj
                 break
-        if not col_obj == None: 
-            if "enemy" in col_obj.attr:
-                self.battle(col_obj)
-            elif "weapon" in col_obj.attr:
-                # pprint.pprint(vars(col_obj))
-                self.player.attack += col_obj.attack
-                self.player.defence += col_obj.defence
-                self.player.check()
-                col_obj.kill()
-            elif "item" in col_obj.attr:
-                if col_obj.name == "treasure":
-                    self.add_exp(random.randint(1, 114514))
-                else:
-                    self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
-                col_obj.kill()
+        if not col_obj == None:
+            if "player" in me.attr:
+                if "enemy" in col_obj.attr:
+                    self.battle(col_obj)
+                elif "weapon" in col_obj.attr:
+                    # pprint.pprint(vars(col_obj))
+                    self.player.attack += col_obj.attack
+                    self.player.defence += col_obj.defence
+                    self.player.check()
+                    col_obj.kill()
+                elif "item" in col_obj.attr:
+                    if col_obj.name == "treasure":
+                        self.add_exp(random.randint(1, 114514))
+                    else:
+                        self.player.hp = min(self.player.hp + col_obj.heal, self.player.max_hp)
+                    col_obj.kill()
+            if "enemy" in me.attr:
+                if "player" in col_obj.attr:
+                    self.battle(me)
         if self.is_moved(me, to_x, to_y) and not is_collision(to_x, to_y):
             me.to_x = to_x
             me.to_y = to_y
@@ -439,6 +438,17 @@ class Game:
             
             self.check_collision(self.player, x, y)
 
+    def rand_move(self, obj):
+        rand_to = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
+        # if is_collision(obj.x + rand_to[0], obj.y + rand_to[1]):
+        #     return
+        # if not obj.to_x == obj.x or not obj.to_y == obj.y:
+        #     return
+        
+        to_x = obj.x + rand_to[0]
+        to_y = obj.y + rand_to[1]
+        self.check_collision(obj, to_x, to_y)
+        # print(f"move: ({self.x}, {self.y}) => ({self.to_x}, {self.to_y})")
 
     # 毎フレームオンメモリ情報を書き換える
     def update(self):
@@ -478,7 +488,14 @@ class Game:
             for id, obj in params["obj"].items():
                 if "enemy" in obj.attr:
                     # pprint.pprint(vars(obj))
-                    obj.rand_move()
+                    self.rand_move(obj)
+    
+        for id, obj in params["obj"].items():
+            if "enemy" in obj.attr or "player" in obj.attr:
+                if abs(pyxel.frame_count - obj.damaged_frame) < 60:
+                    obj.flash = True
+                else:
+                    obj.flash = False
 
     def draw_sprites(self):
         objects = params["obj"]
@@ -486,7 +503,11 @@ class Game:
         for id, obj in objects.items():
             if obj.hide:
                 continue
-            # if not "player" in obj.attr:
+            # 点滅させる
+            if obj.flash:
+                if pyxel.frame_count % 5 == 0:
+                    continue
+                # if not "player" in obj.attr:
             #     print(f"{obj.name} : ({obj.x}, {obj.y}) -> ({obj.to_x}, {obj.to_y})")
             if obj.to_x == obj.x and obj.to_y == obj.y:
                 self.draw_tile(obj.x*self.bit_x, obj.y*self.bit_x, obj_info[obj.name])
