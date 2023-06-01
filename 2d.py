@@ -248,9 +248,9 @@ class Game:
                     print(f"tile not found, {i} {j}")
                     raise RuntimeError
         params["map"] = self.map
-        return
+        # return
 
-        self.maze_map = maze.get_maze("bar_down", self.map_size_x, self.map_size_y)
+        self.maze_map = maze.get_maze("wall_extend", self.map_size_x, self.map_size_y)
         print(len(self.maze_map), len(self.maze_map[0]))
         # maze_map = [[0 for i in range(self.map_size_x)] for j in range(self.map_size_y)]
         for i in range(self.map_size_x):
@@ -595,8 +595,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-bh", "--bit_height", type=int, default=8, help="")
     parser.add_argument("-bw", "--bit_width", type=int, default=8, help="")
-    parser.add_argument("-mh", "--map_height", type=int, default=40, help="")
-    parser.add_argument("-mw", "--map_width", type=int, default=40, help="")
+    parser.add_argument("-mh", "--map_height", type=int, default=41, help="")
+    parser.add_argument("-mw", "--map_width", type=int, default=41, help="")
     parser.add_argument("-th", "--visible_tile_height", type=int, default=16, help="")
     parser.add_argument("-tw", "--visible_tile_width", type=int, default=16, help="")
     parser.add_argument("-fps", "--fps", type=int, default=60, help="")
