@@ -153,15 +153,15 @@ class Pos:
                 else:
                     raise Exception
 
-            print(self.movable, index)
+            # print(self.movable, index)
             self.movable.pop(index)
-            if len(self.movable) == 0:
-                print(f"no movable, retry... {self.x}, {self.y}")
-                self.movable_init()
-                if retry > 10:
-                    print("too many retry")
-                    raise Exception
-                retry += 1
+            # if len(self.movable) == 0:
+            #     print(f"no movable, retry... {self.x}, {self.y}")
+            #     self.movable_init()
+                # if retry > 10:
+                #     print("too many retry")
+                #     raise Exception
+                # retry += 1
         
         return False
 
@@ -203,8 +203,8 @@ def wall_extend(maze=None, x=None, y=None):
 
     print("[wall_extend]")
     
-    for j in range(tile_y):
-        print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
+    # for j in range(tile_y):
+    #     print([1 if s == ObjAttr.WALL else 0 for s in maze[j]])
     
     is_wall_cand = (lambda i, j: 
                     i in range(1, tile_x-1) and
@@ -215,7 +215,7 @@ def wall_extend(maze=None, x=None, y=None):
     retry = 0
     temp_cand = 0 
     while len(cand) > 0:
-        print(len(cand), cand)
+        # print(len(cand), cand)
         # decide start position
         index_cand = random.randint(0, len(cand) - 1)
         rand_cand = cand[index_cand]
@@ -223,9 +223,14 @@ def wall_extend(maze=None, x=None, y=None):
             cand.pop(index_cand)
             continue
         # decide where to extend wall
-        print("cand:", rand_cand, len(cand))
-        pos = Pos(rand_cand, maze, tile_x, tile_y)
-        pos.wall_extend()
+        # print("cand:", rand_cand, len(cand))
+        try:
+            pos = Pos(rand_cand, maze, tile_x, tile_y)
+            pos.wall_extend()
+        except:
+            for j in range(tile_y):
+                print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
+            raise
 
         if temp_cand == len(cand):
             retry += 1
@@ -238,8 +243,8 @@ def wall_extend(maze=None, x=None, y=None):
             print(f"too many... {retry}")
             raise Exception
 
-    for j in range(tile_y):
-        print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
+    # for j in range(tile_y):
+    #     print([1 if s in [ObjAttr.WALL]  else 0 for s in maze[j]])
     
     params["maze"] = maze
 
@@ -362,6 +367,8 @@ def run():
         if (press[pygame.K_ESCAPE]):
             break
 
+        maze = params["maze"]
+
         if (press[pygame.K_u]):
             if (t := params["scale"]+2) in range(5, 100):
                 init_scale(t)
@@ -369,7 +376,7 @@ def run():
                 screen = pygame.display.set_mode(screen_size)
                 make_maze()
                 maze = params["maze"]
-    
+
         if (press[pygame.K_d]):
             if (t := params["scale"]-2) in range(5, 100):
                 init_scale(t)
